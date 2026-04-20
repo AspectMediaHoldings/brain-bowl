@@ -1,0 +1,5 @@
+deny rm -rf "Use trash or move to a temp folder instead"
+
+deny git push --force "Confirm force push manually — do not automate"
+
+deny-redirect **/.env* "Never write to .env files without confirmation"
