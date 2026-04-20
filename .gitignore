@@ -1,0 +1,13 @@
+# Keep output directory but ignore generated files
+output/*
+!output/.gitkeep
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Secrets - never commit these
+.env
+*.key
+*.pem
+secrets/
