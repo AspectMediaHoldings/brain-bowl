@@ -161,11 +161,53 @@ function buildCatalog(skills) {
 const skills = scanSkills();
 const catalog = buildCatalog(skills);
 
-// ── Placeholder HTTP server ───────────────────────────────────────────────────
+// ── CORS helper ───────────────────────────────────────────────────────────────
+
+function setCors(res) {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+}
+
+// ── Static file map ───────────────────────────────────────────────────────────
+
+const STATIC = {
+  '/':         { file: join(__dirname, 'index.html'), mime: 'text/html' },
+  '/app.js':   { file: join(__dirname, 'app.js'),    mime: 'application/javascript' },
+};
+
+// ── Request handler ───────────────────────────────────────────────────────────
 
 const server = createServer((req, res) => {
-  res.writeHead(200, { 'Content-Type': 'text/plain' });
-  res.end('OK');
+  setCors(res);
+
+  if (req.method === 'OPTIONS') {
+    res.writeHead(204); res.end(); return;
+  }
+
+  const url = new URL(req.url, `http://127.0.0.1`);
+
+  // GET /api/skills — return full grouped catalog
+  if (url.pathname === '/api/skills' && req.method === 'GET') {
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify(catalog));
+    return;
+  }
+
+  // Static files
+  const staticEntry = STATIC[url.pathname];
+  if (staticEntry) {
+    try {
+      const content = readFileSync(staticEntry.file);
+      res.writeHead(200, { 'Content-Type': staticEntry.mime });
+      res.end(content);
+    } catch {
+      res.writeHead(404); res.end('Not found');
+    }
+    return;
+  }
+
+  res.writeHead(404); res.end('Not found');
 });
 
 server.on('error', err => {
