@@ -185,6 +185,7 @@ const server = createServer((req, res) => {
     res.writeHead(204); res.end(); return;
   }
 
+  if (!req.url) { res.writeHead(400); res.end(); return; }
   const url = new URL(req.url, `http://127.0.0.1`);
 
   // GET /api/skills — return full grouped catalog
@@ -201,7 +202,8 @@ const server = createServer((req, res) => {
       const content = readFileSync(staticEntry.file);
       res.writeHead(200, { 'Content-Type': staticEntry.mime });
       res.end(content);
-    } catch {
+    } catch (err) {
+      if (err.code !== 'ENOENT') console.warn(`[skill-manager] Static read error: ${err.message}`);
       res.writeHead(404); res.end('Not found');
     }
     return;
