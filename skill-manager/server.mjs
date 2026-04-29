@@ -14,7 +14,7 @@ const HOME = process.env.USERPROFILE || process.env.HOME || 'C:/Users/Default';
 
 const SKILL_DIRS = [
   { path: join(HOME, '.claude', 'skills'), source: 'user' },
-  { path: 'C:/claude-workspace/.claude/skills', source: 'project' },
+  { path: join(__dirname, '..', '.claude', 'skills'), source: 'project' },
 ];
 
 // ── Grouping tables ───────────────────────────────────────────────────────────
@@ -51,7 +51,7 @@ const WORKFLOW_NAMES = new Set([
 ]);
 
 function classifySkill(name) {
-  if (PERSONAL_MAP[name]) {
+  if (Object.hasOwn(PERSONAL_MAP, name)) {
     return { group: 'personal', subgroup: PERSONAL_MAP[name] };
   }
   if (WORKFLOW_PREFIXES.some(p => name.startsWith(p)) || WORKFLOW_NAMES.has(name)) {
@@ -166,6 +166,11 @@ const catalog = buildCatalog(skills);
 const server = createServer((req, res) => {
   res.writeHead(200, { 'Content-Type': 'text/plain' });
   res.end('OK');
+});
+
+server.on('error', err => {
+  console.error(`[skill-manager] Server error: ${err.message}`);
+  process.exit(1);
 });
 
 server.listen(PORT, '127.0.0.1', () => {
