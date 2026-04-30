@@ -49,6 +49,11 @@ Available gstack skills:
 /autoplan, /plan-devex-review, /devex-review, /careful, /freeze, /guard,
 /unfreeze, /gstack-upgrade, /learn
 
+## Skill Manager
+
+Start: `node skill-manager/server.mjs` then open http://localhost:3333
+Indexes all 207 installed skills. Search, filter by category, or use Ask Claude to get a recommendation.
+
 ## Skill routing
 
 When the user's request matches an available skill, invoke it via the Skill tool. When in doubt, invoke the skill.
