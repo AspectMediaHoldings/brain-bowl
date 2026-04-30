@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Skill Manager</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #0f1117; color: #e1e4e8; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+
+/* Top bar */
+.topbar { background: #161b22; border-bottom: 1px solid #30363d; padding: 10px 16px; display: flex; align-items: center; gap: 12px; flex-shrink: 0; }
+.topbar h1 { font-size: 14px; font-weight: 600; color: #f0f6fc; white-space: nowrap; }
+#total-badge { background: #21262d; border: 1px solid #30363d; border-radius: 20px; padding: 2px 9px; font-size: 11px; color: #8b949e; }
+.search-wrap { flex: 1; position: relative; }
+.search-wrap input { width: 100%; background: #21262d; border: 1px solid #30363d; border-radius: 6px; padding: 6px 10px 6px 30px; font-size: 13px; color: #e1e4e8; outline: none; }
+.search-wrap input:focus { border-color: #388bfd; }
+.search-wrap input::placeholder { color: #484f58; }
+.search-icon { position: absolute; left: 9px; top: 50%; transform: translateY(-50%); color: #484f58; font-size: 13px; pointer-events: none; }
+
+/* Main layout */
+.main { display: flex; flex: 1; overflow: hidden; }
+
+/* Left sidebar */
+.sidebar { width: 176px; background: #161b22; border-right: 1px solid #30363d; padding: 10px 0; overflow-y: auto; flex-shrink: 0; }
+.sidebar-label { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.8px; color: #484f58; padding: 8px 14px 3px; }
+.sidebar-item { display: flex; align-items: center; justify-content: space-between; padding: 5px 14px; font-size: 12px; color: #8b949e; cursor: pointer; }
+.sidebar-item:hover { background: #1c2128; color: #e1e4e8; }
+.sidebar-item.active { background: #1c2128; color: #e1e4e8; font-weight: 500; border-left: 2px solid #1f6feb; padding-left: 12px; }
+.sidebar-count { font-size: 10px; color: #484f58; background: #21262d; border-radius: 10px; padding: 1px 5px; }
+.sidebar-divider { border: none; border-top: 1px solid #21262d; margin: 6px 0; }
+
+/* Skill grid */
+.content { flex: 1; overflow-y: auto; padding: 14px; }
+.section-header { display: flex; align-items: baseline; gap: 10px; margin-bottom: 8px; margin-top: 4px; }
+.section-title { font-size: 11px; font-weight: 600; color: #8b949e; text-transform: uppercase; letter-spacing: 0.5px; }
+.section-count { font-size: 10px; color: #484f58; }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(255px, 1fr)); gap: 9px; margin-bottom: 20px; }
+.card { background: #161b22; border: 1px solid #30363d; border-radius: 7px; padding: 12px; cursor: pointer; }
+.card:hover { border-color: #388bfd55; background: #1c2128; }
+.card.best-match { border-color: #1f6feb; background: #1c2535; }
+.best-badge { font-size: 10px; color: #388bfd; font-weight: 600; margin-bottom: 4px; }
+.card-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 6px; margin-bottom: 5px; }
+.card-name { font-size: 12px; font-weight: 600; color: #f0f6fc; word-break: break-word; }
+.card-tag { font-size: 10px; padding: 2px 6px; border-radius: 10px; white-space: nowrap; flex-shrink: 0; }
+.tag-personal  { background: #1a3a2a; color: #3fb950; }
+.tag-workflow  { background: #1a2a3a; color: #388bfd; }
+.tag-scientific { background: #2a1a3a; color: #bc8cff; }
+.card-desc { font-size: 11px; color: #8b949e; line-height: 1.5; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.collapsed-row { background: #161b22; border: 1px dashed #30363d; border-radius: 7px; padding: 9px 14px; display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; cursor: pointer; }
+.collapsed-row span { font-size: 11px; color: #484f58; }
+.collapsed-row button { font-size: 11px; color: #388bfd; background: none; border: none; cursor: pointer; }
+.empty-state { color: #484f58; font-size: 13px; text-align: center; padding: 40px 20px; }
+
+/* Right panel */
+.rec-panel { width: 288px; background: #161b22; border-left: 1px solid #30363d; display: flex; flex-direction: column; flex-shrink: 0; }
+.rec-panel-header { padding: 12px 14px; border-bottom: 1px solid #30363d; font-size: 11px; font-weight: 600; color: #8b949e; text-transform: uppercase; letter-spacing: 0.5px; }
+.rec-query { padding: 10px; border-bottom: 1px solid #30363d; }
+.rec-query textarea { width: 100%; background: #21262d; border: 1px solid #30363d; border-radius: 5px; padding: 7px 9px; font-size: 12px; color: #e1e4e8; resize: none; outline: none; line-height: 1.5; font-family: inherit; }
+.rec-query textarea:focus { border-color: #388bfd; }
+.rec-query button { margin-top: 7px; width: 100%; background: #1f6feb; color: #fff; border: none; border-radius: 5px; padding: 6px; font-size: 12px; font-weight: 500; cursor: pointer; }
+.rec-query button:disabled { opacity: 0.5; cursor: not-allowed; }
+.rec-results { flex: 1; overflow-y: auto; padding: 10px; }
+.rec-placeholder { color: #484f58; font-size: 11px; text-align: center; padding: 20px 10px; line-height: 1.6; }
+.rec-item { margin-bottom: 10px; padding: 9px; background: #21262d; border-radius: 5px; border: 1px solid #30363d; }
+.rec-item-rank { font-size: 10px; color: #388bfd; font-weight: 600; margin-bottom: 3px; }
+.rec-item-name { font-size: 12px; font-weight: 600; color: #f0f6fc; margin-bottom: 3px; }
+.rec-item-reason { font-size: 11px; color: #8b949e; line-height: 1.4; }
+.rec-item-invoke { margin-top: 5px; font-size: 10px; color: #484f58; font-family: monospace; background: #161b22; padding: 2px 6px; border-radius: 3px; display: inline-block; }
+.rec-error { color: #f85149; font-size: 11px; padding: 10px; line-height: 1.5; }
+
+::-webkit-scrollbar { width: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #30363d; border-radius: 3px; }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <h1>Skill Manager</h1>
+  <span id="total-badge">— skills</span>
+  <div class="search-wrap">
+    <span class="search-icon">⌕</span>
+    <input type="text" id="search" placeholder="Search skills by name or keyword...">
+  </div>
+</div>
+
+<div class="main">
+
+  <nav class="sidebar" id="sidebar">
+    <div class="sidebar-label">View</div>
+    <div class="sidebar-item active" data-filter="all">All Skills <span class="sidebar-count" id="count-all">—</span></div>
+    <div class="sidebar-item" data-filter="favorites">Favorites <span class="sidebar-count">0</span></div>
+    <hr class="sidebar-divider">
+    <div class="sidebar-label">Personal</div>
+    <div class="sidebar-item" data-filter="personal">All Personal <span class="sidebar-count" id="count-personal">—</span></div>
+    <div class="sidebar-item" data-filter="BSA / Scouting">BSA / Scouting <span class="sidebar-count" id="count-bsa">—</span></div>
+    <div class="sidebar-item" data-filter="Aspect Media">Aspect Media <span class="sidebar-count" id="count-aspect">—</span></div>
+    <div class="sidebar-item" data-filter="Escalation">Escalation <span class="sidebar-count" id="count-escalation">—</span></div>
+    <div class="sidebar-item" data-filter="Communications">Communications <span class="sidebar-count" id="count-comms">—</span></div>
+    <div class="sidebar-item" data-filter="Client Work">Client Work <span class="sidebar-count" id="count-client">—</span></div>
+    <hr class="sidebar-divider">
+    <div class="sidebar-label">Workflow</div>
+    <div class="sidebar-item" data-filter="workflow">All Workflow <span class="sidebar-count" id="count-workflow">—</span></div>
+    <div class="sidebar-item" data-filter="gstack">gstack <span class="sidebar-count" id="count-gstack">—</span></div>
+    <div class="sidebar-item" data-filter="Firecrawl">Firecrawl <span class="sidebar-count" id="count-firecrawl">—</span></div>
+    <div class="sidebar-item" data-filter="Tools">Other Tools <span class="sidebar-count" id="count-tools">—</span></div>
+    <hr class="sidebar-divider">
+    <div class="sidebar-label">Scientific</div>
+    <div class="sidebar-item" data-filter="scientific">All Scientific <span class="sidebar-count" id="count-scientific">—</span></div>
+  </nav>
+
+  <div class="content" id="content">
+    <div class="empty-state">Loading skills…</div>
+  </div>
+
+  <div class="rec-panel">
+    <div class="rec-panel-header">✦ Ask Claude</div>
+    <div class="rec-query">
+      <textarea id="rec-input" rows="4" placeholder="Describe what you're trying to do…&#10;&#10;Example: I need to write a post-incident review and communicate it to stakeholders."></textarea>
+      <button id="rec-btn">Get recommendation →</button>
+    </div>
+    <div class="rec-results" id="rec-results">
+      <div class="rec-placeholder">Describe your task above and click "Get recommendation" to find the best skills.</div>
+    </div>
+  </div>
+
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>
