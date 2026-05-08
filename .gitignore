@@ -11,3 +11,4 @@ Thumbs.db
 *.key
 *.pem
 secrets/
+.gstack/

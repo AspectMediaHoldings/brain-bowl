@@ -1,0 +1,22 @@
+{
+  "permissions": {
+    "allow": [
+      "WebSearch",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "mcp__claude_ai_Google_Drive__list_recent_files",
+      "Skill(markitdown)",
+      "mcp__claude_ai_Google_Drive__read_file_content",
+      "Bash(mkdir -p \"C:/claude-workspace/.claude/skills/scouting/references\")",
+      "Bash(mkdir -p \"C:/claude-workspace/.claude/skills/aspect-media-etsy-policies/references\")",
+      "Bash(mkdir -p \"C:/claude-workspace/.claude/skills/bsa-shooting-sports/references\")",
+      "mcp__claude_ai_Google_Drive__create_file",
+      "mcp__obsidian__list-available-vaults",
+      "mcp__obsidian__create-directory",
+      "mcp__obsidian__search-vault",
+      "mcp__firecrawl__firecrawl_search",
+      "Bash(mkdir -p /c/claude-workspace/.claude/skills/aspect-media-dogs-coffee-sayings)",
+      "Bash(mkdir -p /c/claude-workspace/.claude/skills/aspect-media-etsy-listings)",
+      "WebFetch(domain:x.com)"
+    ]
+  }
+}
