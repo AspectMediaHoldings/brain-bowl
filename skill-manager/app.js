@@ -119,9 +119,18 @@ function render() {
   if (activeFilter === 'all' || activeFilter === 'personal') {
     const personal = filtered.filter(s => s.group === 'personal');
     if (personal.length) {
-      const subgroups = [...new Set(personal.map(s => s.subgroup))];
-      for (const sg of subgroups) {
-        html += sectionHTML(sg, personal.filter(s => s.subgroup === sg), bestMatchName);
+      const grouped = new Map();
+      for (let i = 0; i < personal.length; i++) {
+        const s = personal[i];
+        let arr = grouped.get(s.subgroup);
+        if (!arr) {
+          arr = [];
+          grouped.set(s.subgroup, arr);
+        }
+        arr.push(s);
+      }
+      for (const [sg, sgSkills] of grouped.entries()) {
+        html += sectionHTML(sg, sgSkills, bestMatchName);
       }
     }
   }
@@ -129,9 +138,18 @@ function render() {
   if (activeFilter === 'all' || activeFilter === 'workflow') {
     const workflow = filtered.filter(s => s.group === 'workflow');
     if (workflow.length) {
-      const subgroups = [...new Set(workflow.map(s => s.subgroup))];
-      for (const sg of subgroups) {
-        html += sectionHTML(sg, workflow.filter(s => s.subgroup === sg), bestMatchName);
+      const grouped = new Map();
+      for (let i = 0; i < workflow.length; i++) {
+        const s = workflow[i];
+        let arr = grouped.get(s.subgroup);
+        if (!arr) {
+          arr = [];
+          grouped.set(s.subgroup, arr);
+        }
+        arr.push(s);
+      }
+      for (const [sg, sgSkills] of grouped.entries()) {
+        html += sectionHTML(sg, sgSkills, bestMatchName);
       }
     }
   }
