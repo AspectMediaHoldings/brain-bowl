@@ -80,7 +80,7 @@ login_params = {'login_or_email': user_email, 'password': auth_token}
 response = client.make_call('users', 'user_access_info', params=login_params)
 
 # Extract UID from response
-import xml.etree.ElementTree as ET
+import defusedxml.ElementTree as ET
 uid = ET.fromstring(response.content)[0].text
 
 # Get detailed user info
@@ -217,9 +217,10 @@ python3 scripts/notebook_operations.py backup-all --email user@example.edu --pas
 
 ## Python Package Installation
 
-Install the `labarchives-py` wrapper for simplified API access:
+Install the `labarchives-py` wrapper for simplified API access, along with `defusedxml` for secure XML parsing:
 
 ```bash
+pip install defusedxml
 git clone https://github.com/mcmero/labarchives-py
 cd labarchives-py
 uv pip install .

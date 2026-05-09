@@ -113,7 +113,7 @@ def test_authentication(config_path='config.yaml'):
     try:
         # Try to import labarchives-py
         from labarchivespy.client import Client
-        import xml.etree.ElementTree as ET
+        import defusedxml.ElementTree as ET
 
         # Load config
         with open(config_path, 'r') as f:
@@ -152,7 +152,7 @@ def test_authentication(config_path='config.yaml'):
 
     except ImportError:
         print("\n⚠️  labarchives-py package not installed")
-        print("   Install with: pip install git+https://github.com/mcmero/labarchives-py")
+        print("   Install with: pip install defusedxml git+https://github.com/mcmero/labarchives-py")
 
     except Exception as e:
         print(f"\n❌ Connection test failed: {e}")
