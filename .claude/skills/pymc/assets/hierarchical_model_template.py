@@ -66,11 +66,11 @@ with pm.Model(coords=coords) as hierarchical_model:
 
     # Hyperpriors (population-level parameters)
     # TODO: Adjust hyperpriors based on your domain knowledge
-    mu_alpha = pm.Normal('mu_alpha', mu=0, sigma=10)
-    sigma_alpha = pm.HalfNormal('sigma_alpha', sigma=5)
+    mu_alpha = pm.Normal('mu_alpha', mu=5.0, sigma=10)
+    sigma_alpha = pm.HalfNormal('sigma_alpha', sigma=2.0)
 
-    mu_beta = pm.Normal('mu_beta', mu=0, sigma=10)
-    sigma_beta = pm.HalfNormal('sigma_beta', sigma=5)
+    mu_beta = pm.Normal('mu_beta', mu=1.5, sigma=10)
+    sigma_beta = pm.HalfNormal('sigma_beta', sigma=0.5)
 
     # Group-level parameters (non-centered parameterization)
     # Non-centered parameterization improves sampling efficiency
@@ -87,7 +87,7 @@ with pm.Model(coords=coords) as hierarchical_model:
     sigma = pm.HalfNormal('sigma', sigma=5)
 
     # Likelihood
-    y_obs = pm.Normal('y_obs', mu=mu, sigma=sigma, observed=y, dims='obs')
+    y_obs = pm.Normal('y_obs', mu=mu, sigma=sigma, observed=y, shape=X_data.shape)
 
 print("Model built successfully!")
 print(f"Groups: {n_groups}")
@@ -282,17 +282,18 @@ new_X = np.array([-2, -1, 0, 1, 2])
 new_groups = np.array([0, 2, 4, 6, 8])  # Select some groups
 
 with hierarchical_model:
-    pm.set_data({'X_data': new_X, 'groups_data': new_groups, 'obs': np.arange(len(new_X))})
+    pm.set_data({'X_data': new_X, 'groups_data': new_groups})
 
     post_pred = pm.sample_posterior_predictive(
-        idata.posterior,
+        idata,
         var_names=['y_obs'],
-        random_seed=42
+        random_seed=42,
+        predictions=True
     )
 
-y_pred_samples = post_pred.posterior_predictive['y_obs']
+y_pred_samples = post_pred.predictions['y_obs']
 y_pred_mean = y_pred_samples.mean(dim=['chain', 'draw']).values
-y_pred_hdi = az.hdi(y_pred_samples, hdi_prob=0.95).values
+y_pred_hdi = az.hdi(y_pred_samples, hdi_prob=0.95)['y_obs'].values
 
 print(f"Predictions for existing groups:")
 print(f"{'Group':<10} {'X':<10} {'Mean':<15} {'95% HDI Lower':<15} {'95% HDI Upper':<15}")
