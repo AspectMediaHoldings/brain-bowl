@@ -217,9 +217,10 @@ python3 scripts/notebook_operations.py backup-all --email user@example.edu --pas
 
 ## Python Package Installation
 
-Install the `labarchives-py` wrapper for simplified API access:
+Install the `labarchives-py` wrapper for simplified API access, along with `defusedxml` for secure XML parsing:
 
 ```bash
+pip install defusedxml
 git clone https://github.com/mcmero/labarchives-py
 cd labarchives-py
 uv pip install .

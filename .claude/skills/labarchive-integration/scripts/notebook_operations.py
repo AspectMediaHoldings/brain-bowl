@@ -37,7 +37,7 @@ def init_client(config):
         )
     except ImportError:
         print("❌ labarchives-py package not installed")
-        print("   Install with: pip install git+https://github.com/mcmero/labarchives-py")
+        print("   Install with: pip install defusedxml git+https://github.com/mcmero/labarchives-py")
         sys.exit(1)
 
 
