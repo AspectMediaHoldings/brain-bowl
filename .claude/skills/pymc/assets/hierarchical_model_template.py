@@ -265,14 +265,6 @@ print("Shrinkage plot saved to 'shrinkage_plot.png'")
 # 8. PREDICTIONS FOR NEW DATA
 # =============================================================================
 
-# TODO: Specify new data
-# For existing groups:
-# new_X = np.array([...])
-# new_groups = np.array([0, 1, 2, ...])  # Existing group indices
-
-# For a new group (predict using population-level parameters):
-# Just use mu_alpha and mu_beta
-
 print("\n" + "="*60)
 print("PREDICTIONS FOR NEW DATA")
 print("="*60)
@@ -282,7 +274,10 @@ new_X = np.array([-2, -1, 0, 1, 2])
 new_groups = np.array([0, 2, 4, 6, 8])  # Select some groups
 
 with hierarchical_model:
-    pm.set_data({'X_data': new_X, 'groups_data': new_groups})
+    pm.set_data(
+        {'X_data': new_X, 'groups_data': new_groups},
+        coords={'obs': np.arange(len(new_X))}
+    )
 
     post_pred = pm.sample_posterior_predictive(
         idata,
