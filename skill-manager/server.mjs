@@ -1,6 +1,6 @@
 // skill-manager/server.mjs
 import { createServer } from 'http';
-import { readFileSync, readdirSync, statSync, existsSync } from 'fs';
+import { readFileSync, readFile, readdirSync, statSync, existsSync } from 'fs';
 import { join } from 'path';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
@@ -286,14 +286,15 @@ const server = createServer((req, res) => {
   // Static files
   const staticEntry = STATIC[url.pathname];
   if (staticEntry) {
-    try {
-      const content = readFileSync(staticEntry.file);
+    readFile(staticEntry.file, (err, content) => {
+      if (err) {
+        if (err.code !== 'ENOENT') console.warn(`[skill-manager] Static read error: ${err.message}`);
+        res.writeHead(404); res.end('Not found');
+        return;
+      }
       res.writeHead(200, { 'Content-Type': staticEntry.mime });
       res.end(content);
-    } catch (err) {
-      if (err.code !== 'ENOENT') console.warn(`[skill-manager] Static read error: ${err.message}`);
-      res.writeHead(404); res.end('Not found');
-    }
+    });
     return;
   }
 
