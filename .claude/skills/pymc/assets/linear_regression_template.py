@@ -42,7 +42,6 @@ X_scaled = (X - X_mean) / X_std
 # 2. BUILD MODEL
 # =============================================================================
 
-# TODO: Customize predictor names
 predictor_names = [f'predictor{i+1}' for i in range(X.shape[1])]
 
 coords = {
