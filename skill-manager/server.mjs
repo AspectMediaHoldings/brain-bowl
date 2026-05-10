@@ -160,6 +160,7 @@ function buildCatalog(skills) {
 
 const skills = scanSkills();
 const catalog = buildCatalog(skills);
+const catalogJson = JSON.stringify(catalog);
 
 // ── Claude recommendation ─────────────────────────────────────────────────────
 
@@ -254,7 +255,7 @@ const server = createServer((req, res) => {
   // GET /api/skills — return full grouped catalog
   if (url.pathname === '/api/skills' && req.method === 'GET') {
     res.writeHead(200, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify(catalog));
+    res.end(catalogJson);
     return;
   }
 
