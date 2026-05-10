@@ -31,17 +31,16 @@ function updateCounts() {
   document.getElementById('count-workflow').textContent = catalog.workflow.length;
   document.getElementById('count-scientific').textContent = catalog.scientific.length;
 
-  const sg = (group, subgroup) =>
-    catalog[group].filter(s => s.subgroup === subgroup).length;
-
-  document.getElementById('count-bsa').textContent        = sg('personal', 'BSA / Scouting');
-  document.getElementById('count-aspect').textContent     = sg('personal', 'Aspect Media');
-  document.getElementById('count-escalation').textContent = sg('personal', 'Escalation');
-  document.getElementById('count-comms').textContent      = sg('personal', 'Communications');
-  document.getElementById('count-client').textContent     = sg('personal', 'Client Work');
-  document.getElementById('count-gstack').textContent     = sg('workflow', 'gstack');
-  document.getElementById('count-firecrawl').textContent  = sg('workflow', 'Firecrawl');
-  document.getElementById('count-tools').textContent      = sg('workflow', 'Tools');
+  // Dynamically update subgroup counts based on the sidebar filters
+  document.querySelectorAll('.sidebar-item').forEach(item => {
+    const filter = item.dataset.filter;
+    if (!['all', 'favorites', 'personal', 'workflow', 'scientific'].includes(filter)) {
+      const countEl = item.querySelector('.sidebar-count');
+      if (countEl) {
+        countEl.textContent = allSkills.filter(s => s.subgroup === filter).length;
+      }
+    }
+  });
 }
 
 // ── Filter ────────────────────────────────────────────────────────────────────
@@ -51,10 +50,9 @@ function getFilteredSkills() {
 
   if (activeFilter === 'favorites') return [];
   if (activeFilter === 'personal')   skills = catalog.personal;
-  if (activeFilter === 'workflow')   skills = catalog.workflow;
-  if (activeFilter === 'scientific') skills = catalog.scientific;
-  if (['BSA / Scouting','Aspect Media','Escalation','Communications','Client Work',
-       'gstack','Firecrawl','Tools'].includes(activeFilter)) {
+  else if (activeFilter === 'workflow')   skills = catalog.workflow;
+  else if (activeFilter === 'scientific') skills = catalog.scientific;
+  else if (activeFilter !== 'all') {
     skills = allSkills.filter(s => s.subgroup === activeFilter);
   }
 
