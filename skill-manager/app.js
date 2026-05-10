@@ -69,6 +69,22 @@ function getFilteredSkills() {
 
 // ── Render ────────────────────────────────────────────────────────────────────
 
+function groupBySubgroup(skills) {
+  const groups = Object.create(null);
+  const result = [];
+  for (let i = 0; i < skills.length; i++) {
+    const s = skills[i];
+    let arr = groups[s.subgroup];
+    if (!arr) {
+      arr = [];
+      groups[s.subgroup] = arr;
+      result.push({ subgroup: s.subgroup, skills: arr });
+    }
+    arr.push(s);
+  }
+  return result;
+}
+
 function cardHTML(skill, isBestMatch) {
   const tagClass = `tag-${skill.group}`;
   const label = skill.group === 'personal' ? 'Personal'
@@ -117,18 +133,9 @@ function render() {
   if (activeFilter === 'all' || activeFilter === 'personal') {
     const personal = filtered.filter(s => s.group === 'personal');
     if (personal.length) {
-      const grouped = new Map();
-      for (let i = 0; i < personal.length; i++) {
-        const s = personal[i];
-        let arr = grouped.get(s.subgroup);
-        if (!arr) {
-          arr = [];
-          grouped.set(s.subgroup, arr);
-        }
-        arr.push(s);
-      }
-      for (const [sg, sgSkills] of grouped.entries()) {
-        html += sectionHTML(sg, sgSkills, bestMatchName);
+      const grouped = groupBySubgroup(personal);
+      for (let i = 0; i < grouped.length; i++) {
+        html += sectionHTML(grouped[i].subgroup, grouped[i].skills, bestMatchName);
       }
     }
   }
@@ -136,18 +143,9 @@ function render() {
   if (activeFilter === 'all' || activeFilter === 'workflow') {
     const workflow = filtered.filter(s => s.group === 'workflow');
     if (workflow.length) {
-      const grouped = new Map();
-      for (let i = 0; i < workflow.length; i++) {
-        const s = workflow[i];
-        let arr = grouped.get(s.subgroup);
-        if (!arr) {
-          arr = [];
-          grouped.set(s.subgroup, arr);
-        }
-        arr.push(s);
-      }
-      for (const [sg, sgSkills] of grouped.entries()) {
-        html += sectionHTML(sg, sgSkills, bestMatchName);
+      const grouped = groupBySubgroup(workflow);
+      for (let i = 0; i < grouped.length; i++) {
+        html += sectionHTML(grouped[i].subgroup, grouped[i].skills, bestMatchName);
       }
     }
   }
