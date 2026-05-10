@@ -12,3 +12,6 @@ Thumbs.db
 *.pem
 secrets/
 .gstack/
+__pycache__/
+*.py[cod]
+*$py.class
