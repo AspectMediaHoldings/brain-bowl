@@ -210,13 +210,14 @@ with linear_model:
     post_pred = pm.sample_posterior_predictive(
         idata.posterior,
         var_names=['y_obs'],
+        predictions=True,
         random_seed=42
     )
 
 # Extract predictions
-y_pred_samples = post_pred.posterior_predictive['y_obs']
+y_pred_samples = post_pred.predictions['y_obs']
 y_pred_mean = y_pred_samples.mean(dim=['chain', 'draw']).values
-y_pred_hdi = az.hdi(y_pred_samples, hdi_prob=0.95)['y_obs'].values
+y_pred_hdi = az.hdi(post_pred.predictions, hdi_prob=0.95)['y_obs'].values
 
 print("\n" + "="*60)
 print("PREDICTIONS FOR NEW DATA")
