@@ -87,14 +87,23 @@ def single_dataset_evaluation(group, dataset_name='Caco2_Wang'):
         print(f"Valid size: {len(valid)}")
 
         # TODO: Replace with your model training
-        model = MockModel(random_state=seed)
-        model.fit(train['Drug'], train['Y'])
+        from sklearn.ensemble import RandomForestRegressor
+        from tdc.chem_utils import MolConvert
+
+        # Convert SMILES to ECFP4 fingerprints
+        converter = MolConvert(src='SMILES', dst='ECFP4')
+        X_train = converter(train['Drug'].tolist())
+
+        # Initialize and train RandomForest model
+        model = RandomForestRegressor(random_state=seed, n_estimators=10)
+        model.fit(X_train, train['Y'])
 
         test = benchmark[seed]['test']
         y_true = test['Y'].values
 
         # Replace dummy predictions with actual model prediction
-        predictions[seed] = model.predict(test['Drug'])
+        X_test = converter(test['Drug'].tolist())
+        predictions[seed] = model.predict(X_test)
         y_pred = predictions[seed]
 
         # Evaluate this seed
@@ -142,9 +151,17 @@ def multiple_datasets_evaluation(group):
             test = benchmark[seed]['test']
 
             # TODO: Replace with your model
-            model = MockModel(random_state=seed)
-            model.fit(train['Drug'], train['Y'])
-            predictions[seed] = model.predict(test['Drug'])
+            from sklearn.ensemble import RandomForestRegressor
+            from tdc.chem_utils import MolConvert
+
+            converter = MolConvert(src='SMILES', dst='ECFP4')
+            X_train = converter(train['Drug'].tolist())
+
+            model = RandomForestRegressor(random_state=seed, n_estimators=10)
+            model.fit(X_train, train['Y'])
+
+            X_test = converter(test['Drug'].tolist())
+            predictions[seed] = model.predict(X_test)
 
         all_predictions[dataset_name] = predictions
 
