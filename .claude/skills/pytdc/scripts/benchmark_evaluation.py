@@ -15,6 +15,25 @@ import numpy as np
 import pandas as pd
 
 
+class MockModel:
+    """
+    A simple mock model for demonstration purposes when a real model is not available.
+    """
+    def __init__(self, random_state=None):
+        self.random_state = random_state
+        self.mean_y = 0.0
+
+    def fit(self, X, y):
+        self.mean_y = np.mean(y)
+        return self
+
+    def predict(self, X):
+        if self.random_state is not None:
+            np.random.seed(self.random_state)
+        # Add controlled noise around the mean to simulate predictions
+        return self.mean_y + np.random.normal(0, 0.3, len(X))
+
+
 def load_benchmark_group():
     """
     Load the ADMET benchmark group
@@ -68,19 +87,15 @@ def single_dataset_evaluation(group, dataset_name='Caco2_Wang'):
         print(f"Valid size: {len(valid)}")
 
         # TODO: Replace with your model training
-        # model = YourModel()
-        # model.fit(train['Drug'], train['Y'])
+        model = MockModel(random_state=seed)
+        model.fit(train['Drug'], train['Y'])
 
-        # For demonstration, create dummy predictions
-        # Replace with: predictions[seed] = model.predict(benchmark[seed]['test'])
         test = benchmark[seed]['test']
         y_true = test['Y'].values
 
-        # Simulate predictions (add controlled noise)
-        np.random.seed(seed)
-        y_pred = y_true + np.random.normal(0, 0.3, len(y_true))
-
-        predictions[seed] = y_pred
+        # Replace dummy predictions with actual model prediction
+        predictions[seed] = model.predict(test['Drug'])
+        y_pred = predictions[seed]
 
         # Evaluate this seed
         evaluator = Evaluator(name='MAE')
@@ -127,15 +142,9 @@ def multiple_datasets_evaluation(group):
             test = benchmark[seed]['test']
 
             # TODO: Replace with your model
-            # model = YourModel()
-            # model.fit(train['Drug'], train['Y'])
-            # predictions[seed] = model.predict(test['Drug'])
-
-            # Dummy predictions for demonstration
-            np.random.seed(seed)
-            y_true = test['Y'].values
-            y_pred = y_true + np.random.normal(0, 0.3, len(y_true))
-            predictions[seed] = y_pred
+            model = MockModel(random_state=seed)
+            model.fit(train['Drug'], train['Y'])
+            predictions[seed] = model.predict(test['Drug'])
 
         all_predictions[dataset_name] = predictions
 
