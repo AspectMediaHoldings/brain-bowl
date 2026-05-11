@@ -45,8 +45,7 @@ groups = np.repeat(np.arange(n_groups), n_per_group)
 X = np.random.randn(n_obs)
 y = group_alphas[groups] + group_betas[groups] * X + np.random.randn(n_obs) * true_sigma
 
-# TODO: Customize group names
-group_names = [f'Group_{i}' for i in range(n_groups)]
+group_names = [f'Group_{chr(65+i)}' for i in range(n_groups)]
 
 # =============================================================================
 # 2. BUILD HIERARCHICAL MODEL
