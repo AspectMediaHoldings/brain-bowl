@@ -63,6 +63,22 @@ references this key. Clone the user's voice once, then reuse the voice id.
 
 Pipeline: source portrait or clip, plus voice audio, run through a lipsync model.
 
+### Source photo checklist (do this first)
+
+The avatar is only as good as the still it is built from, and the engine
+generates every expression and word from that one frame. Aim for a face that
+reads as both warm and credible (Todorov on rapid facial-trust judgments, Fiske
+on warmth plus competence). Capture one clean photo and reuse it:
+
+- Front-facing, both eyes open, looking straight at the lens.
+- Even, soft light. Face a window. Avoid harsh shadows, car interiors, mixed light.
+- Plain, uncluttered background.
+- Relaxed expression with lips together or barely parted. Do not use a wide,
+  teeth-baring smile in the source frame. The lipsync model animates the mouth
+  and an open smile can distort. Let the engine add the smile and speech.
+- Keep facial-hair style consistent across all content for brand recognition.
+- Higher resolution is better. Fill the frame with head and the top of shoulders.
+
 ### Verified fal.ai lipsync models (confirmed mid-2026)
 
 | Model slug | Input | Notes |
