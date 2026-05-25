@@ -171,11 +171,19 @@ Requires `FAL_KEY` and `ELEVENLABS_API_KEY` to be set.
 - `aspect-media-content-video` — short-form social and POD distribution
 - `ai-video-platform-evaluation` — compare platforms on budget
 
-## Custom Unified MCP (later, optional)
+## Unified Avatar Studio MCP Server
 
-If this workflow becomes repetitive, build a thin Node and TypeScript MCP
-(following `mcp-server-patterns`, stdio transport) that hides the routing behind
-a few tools: `clone_voice`, `generate_talking_head`, `lipsync`,
-`render_character`, `assemble_video`. Each routes to fal.ai for open or draft
-work and HeyGen for finals. Do not build this first. Start with the skills and
-the fal.ai MCP above, and only wrap them once the manual flow proves itself.
+A built server lives at `mcp-servers/avatar-studio/`. It unifies the photoreal
+pipeline behind one MCP, so you call clean tools instead of juggling providers.
+
+Tools: `list_voices`, `synthesize_speech`, `clone_voice` (ElevenLabs),
+`lipsync` (fal.ai open/draft track, default `veed/fabric-1.0`),
+`generate_talking_head` (HeyGen final track), and `assemble_video` (FFmpeg).
+
+Setup: `cd mcp-servers/avatar-studio && npm install`, then register it in
+`~/.claude.json` with your keys. See that folder's `README.md` for the config
+block and the recommended call sequence.
+
+The stylized character track stays manual (Ready Player Me, VSeeFace, Blender,
+Live2D have no clean API). Capture that character as footage and feed it into
+`assemble_video`.
