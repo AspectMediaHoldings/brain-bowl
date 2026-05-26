@@ -141,7 +141,7 @@ export default function App() {
   if (screen === 'stats') return <StatsScreen user={user} onBack={() => setScreen('home')} />;
 
   // ─── COACH DASHBOARD ─────────────────────────────────────────────
-  if (screen === 'coach' && isCoach) return <CoachDashboard user={user} onBack={() => setScreen('home')} />;
+  if (screen === 'coach' && (isCoach || isAdmin)) return <CoachDashboard user={user} onBack={() => setScreen('home')} />;
 
   // ─── ADMIN DASHBOARD ─────────────────────────────────────────────
   if (screen === 'admin' && isAdmin) return <AdminDashboard user={user} onBack={() => setScreen('home')} />;
@@ -163,7 +163,7 @@ export default function App() {
     const navItems = [
       { label: 'Question Database', sub: 'Search · Frequency · Sets', color: '#7b9fff', onClick: () => setScreen('db'), show: true },
       { label: 'My Stats', sub: 'Session history & trends', color: '#C9A227', onClick: () => setScreen('stats'), show: !!user },
-      { label: 'Coach Roster', sub: 'Manage your students', color: '#20B2AA', onClick: () => setScreen('coach'), show: isCoach },
+      { label: 'Coach Roster', sub: 'Manage your students', color: '#20B2AA', onClick: () => setScreen('coach'), show: isCoach || isAdmin },
       { label: 'Admin Panel', sub: 'Users · Assignments · Activity', color: '#f5c518', onClick: () => setScreen('admin'), show: isAdmin },
     ].filter(n => n.show);
 
@@ -182,7 +182,7 @@ export default function App() {
         )}
         {navItems.length > 0 && (
           <div style={{ maxWidth: 800, margin: '0 auto', padding: '16px 20px 0' }}>
-            <div style={{ display: 'grid', gridTemplateColumns: `repeat(${Math.min(navItems.length, 4)}, 1fr)`, gap: 10 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: 10 }}>
               {navItems.map(({ label, sub, color, onClick }) => (
                 <button
                   key={label}
