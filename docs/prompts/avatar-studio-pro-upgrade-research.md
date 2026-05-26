@@ -110,6 +110,30 @@ Video engineer:
   bitrate, aspect) for Reels / Shorts / TikTok and YouTube. Codec choices for an
   editable master (ProRes / H.265) vs final delivery (H.264).
 
+## Phase 1.5 — Save and publish the research (always do this)
+
+Capture the Phase 1 findings and the full source list as one Markdown file:
+
+- Write it to `docs/research/avatar-studio/<YYYY-MM-DD>-studio-upgrade-sources.md`
+  (create the `docs/research/avatar-studio/` directory if it does not exist).
+  Structure it by persona (voice, audio, video) with the key findings under each,
+  then a numbered source list of every URL you used. Commit this file on the
+  working branch.
+- Then upload the same file to Google Drive, if a Google Drive MCP server is
+  connected on this machine. Do not hardcode a server name; use whatever Drive
+  MCP is present. Steps:
+  1. Find the target folder. Search Drive for a folder titled "AI Avatar"
+     (`mimeType = 'application/vnd.google-apps.folder' and title = 'AI Avatar'`).
+     Use its id as the parent if found, otherwise create that folder first.
+  2. Create the doc in that folder with the Drive create-file tool: pass the
+     Markdown as text content, set the content mime type to `text/markdown` (or
+     `text/plain`), title it the same dated name, and set the parent to the folder
+     id.
+  3. Report the resulting Drive link.
+- If no Google Drive MCP is connected, do not fail. Keep the local `docs/` file,
+  then tell the user the Drive upload was skipped because no Drive connector is
+  available and how to connect one.
+
 ## Phase 2 — Gap analysis
 
 Produce a concise matrix: capability -> studio-grade standard -> what Avatar

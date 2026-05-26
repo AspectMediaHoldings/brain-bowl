@@ -82,6 +82,24 @@ persona, with source URLs:
   studio, interactive), backgrounds, captions; per-platform delivery specs;
   codecs for editable masters vs final delivery.
 
+## Phase 1.5 — Save and publish the research (always do this)
+Capture the Phase 1 findings plus the full source list as one Markdown file.
+- Write it to `docs/research/avatar-studio/<YYYY-MM-DD>-studio-upgrade-sources.md`
+  (create the directory if needed). Group findings by persona (voice, audio,
+  video), then a numbered list of every source URL. Commit it on the current
+  branch.
+- Then upload the same file to Google Drive if a Google Drive MCP is connected
+  (use whatever Drive MCP is present, do not hardcode a name):
+  1. Search Drive for a folder titled "AI Avatar"
+     (`mimeType = 'application/vnd.google-apps.folder' and title = 'AI Avatar'`);
+     use its id as the parent, or create the folder first if missing.
+  2. Create the doc in that folder via the Drive create-file tool: Markdown as
+     text content, content mime type `text/markdown` (or `text/plain`), same dated
+     title, parent set to the folder id.
+  3. Report the Drive link.
+- If no Google Drive MCP is connected, do not fail: keep the local `docs/` file
+  and tell the user the upload was skipped and how to connect a Drive connector.
+
 ## Phase 2 — Gap analysis
 Produce a matrix: capability -> studio-grade standard -> what Avatar Studio does
 today -> the gap -> the fix. Group by the three disciplines. This is the contract
