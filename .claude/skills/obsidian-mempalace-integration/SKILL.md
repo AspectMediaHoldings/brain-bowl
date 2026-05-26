@@ -155,7 +155,11 @@ Before providing work machine guidance:
 ## References
 
 - Machine: Windows home desktop (primary). Work machine deferred.
-- MemPalace: local SQLite-based persistent memory, fully offline. pip install mempalace.
+- MemPalace: local-first persistent memory (ChromaDB plus SQLite, local Sentence
+  Transformers embeddings). Offline by default. Install via uv, pipx, or pip
+  (`mempalace`). MCP entry point: `python -m mempalace.mcp_server`. Optional SSE
+  transport (`--transport sse`) exposes it as a remote endpoint for cross-machine
+  or cloud access.
 - Obsidian: local vault, no cloud requirement. MCP via obsidian-mcp (npm).
 - Config location: `%USERPROFILE%\.claude\claude_desktop_config.json`
 - NotebookLM: cloud-based, separate tool — not part of this integration. Do not conflate.
