@@ -1,8 +1,14 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import HomeScreen from './components/HomeScreen';
 import TossupPlayer from './components/TossupPlayer';
 import BonusPlayer from './components/BonusPlayer';
+import AuthGate from './components/AuthGate';
+import MFAChallenge from './components/MFAChallenge';
+import MFASetup from './components/MFASetup';
+import StatsScreen from './components/StatsScreen';
 import { fetchTossups, fetchRandomBonus } from './utils/qbApi';
+import { useAuth } from './hooks/useAuth';
+import { useSession } from './hooks/useSession';
 
 const INIT_SCORE = { pts: 0, bonusPts: 0, powers: 0, negs: 0, played: 0 };
 
@@ -16,16 +22,14 @@ const S = {
     borderRadius: 6, background: ghost ? 'transparent' : c,
     color: ghost ? c : '#0a0b0f', cursor: 'pointer', fontFamily: 'inherit', letterSpacing: 1,
   }),
-  topBar: {
-    background: '#0d0e16', borderBottom: '1px solid #1e2030', padding: '8px 20px',
-  },
-  topBarInner: {
-    maxWidth: 800, margin: '0 auto', display: 'flex', justifyContent: 'space-between',
-    alignItems: 'center', fontSize: 13, color: '#4a4d60',
-  },
+  topBar: { background: '#0d0e16', borderBottom: '1px solid #1e2030', padding: '8px 20px' },
+  topBarInner: { maxWidth: 800, margin: '0 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 13, color: '#4a4d60' },
 };
 
 export default function App() {
+  const { user, profile, aal, loading, guest, isCoach, needsMFA, needsMFASetup, signOut, continueAsGuest } = useAuth();
+  const { saveSession } = useSession(user);
+
   const [screen, setScreen] = useState('home');
   const [queue, setQueue] = useState([]);
   const [qIdx, setQIdx] = useState(0);
@@ -35,31 +39,16 @@ export default function App() {
   const [filters, setFilters] = useState(null);
   const [error, setError] = useState(null);
 
-  const advanceQuestion = useCallback((currentIdx, queueLen) => {
-    const next = currentIdx + 1;
-    if (next >= queueLen) {
-      setScreen('results');
-    } else {
-      setQIdx(next);
-      setScreen('tossup');
-    }
-  }, []);
+  const queueRef = useRef(queue);
+  queueRef.current = queue;
 
   const handleStart = useCallback(async (opts) => {
     setFilters(opts);
     setError(null);
     setScreen('loading');
     try {
-      const tossups = await fetchTossups({
-        categories: opts.categories,
-        difficulties: opts.difficulties,
-        num: opts.num,
-      });
-      if (!tossups.length) {
-        setError('No questions returned for these filters. Try different settings.');
-        setScreen('home');
-        return;
-      }
+      const tossups = await fetchTossups({ categories: opts.categories, difficulties: opts.difficulties, num: opts.num });
+      if (!tossups.length) { setError('No questions returned. Try different settings.'); setScreen('home'); return; }
       setQueue(tossups);
       setQIdx(0);
       setScore({ ...INIT_SCORE });
@@ -72,67 +61,77 @@ export default function App() {
   }, []);
 
   const handleTossupResult = useCallback(async ({ pts, correct, power, tossup, skipped }) => {
-    const newScore = (s) => ({
-      ...s,
-      pts: s.pts + pts,
-      powers: s.powers + (power ? 1 : 0),
-      negs: s.negs + (pts === -5 ? 1 : 0),
-      played: s.played + 1,
-    });
-    setScore(newScore);
-
+    setScore(s => ({ ...s, pts: s.pts + pts, powers: s.powers + (power ? 1 : 0), negs: s.negs + (pts === -5 ? 1 : 0), played: s.played + 1 }));
     if (correct) {
       setLastTossupAnswer(tossup.answer);
       try {
-        const bonus = await fetchRandomBonus({
-          categories: tossup.category ? [tossup.category] : filters?.categories ?? [],
-          difficulties: filters?.difficulties ?? [3, 4, 5],
-        });
+        const bonus = await fetchRandomBonus({ categories: tossup.category ? [tossup.category] : filters?.categories ?? [], difficulties: filters?.difficulties ?? [3, 4, 5] });
         setCurrentBonus(bonus);
-      } catch {
-        setCurrentBonus(null);
-      }
+      } catch { setCurrentBonus(null); }
       setScreen('bonus');
     } else {
       setQIdx(prev => {
         const next = prev + 1;
-        if (next >= queue.length) { setScreen('results'); return prev; }
+        if (next >= queueRef.current.length) { setScreen('results'); return prev; }
         setScreen('tossup');
         return next;
       });
     }
-  }, [filters, queue.length]);
+  }, [filters]);
 
-  const handleBonusDone = useCallback(({ bonusPts }) => {
-    setScore(s => ({ ...s, bonusPts: s.bonusPts + bonusPts }));
+  const handleBonusDone = useCallback(async ({ bonusPts }) => {
+    setScore(s => {
+      const next = { ...s, bonusPts: s.bonusPts + bonusPts };
+      return next;
+    });
     setCurrentBonus(null);
     setQIdx(prev => {
       const next = prev + 1;
-      if (next >= queue.length) { setScreen('results'); return prev; }
+      if (next >= queueRef.current.length) {
+        setScore(s => { saveSession(s, filters); return s; });
+        setScreen('results');
+        return prev;
+      }
       setScreen('tossup');
       return next;
     });
-  }, [queue.length]);
+  }, [filters, saveSession]);
 
-  const handleRestart = () => {
-    setScreen('home');
-    setQueue([]);
-    setScore({ ...INIT_SCORE });
-    setCurrentBonus(null);
-    setError(null);
-  };
+  const handleRestart = () => { setScreen('home'); setQueue([]); setScore({ ...INIT_SCORE }); setCurrentBonus(null); setError(null); };
 
   const sessionTotal = score.pts + score.bonusPts;
 
-  // ─── LOADING ────────────────────────────────────────────────────
+  // ─── AUTH LOADING ────────────────────────────────────────────────
+  if (loading) {
+    return (
+      <div style={{ ...S.wrap, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ fontSize: 13, color: '#4a4d60', letterSpacing: 2, textTransform: 'uppercase' }}>Loading...</div>
+      </div>
+    );
+  }
+
+  // ─── AUTH GATE ───────────────────────────────────────────────────
+  if (!user && !guest) return <AuthGate onGuest={continueAsGuest} />;
+
+  // ─── COACH MFA SETUP ─────────────────────────────────────────────
+  if (needsMFASetup) return <MFASetup />;
+
+  // ─── COACH MFA CHALLENGE ─────────────────────────────────────────
+  if (needsMFA) {
+    const factors = aal?.currentAuthenticationMethods?.map(m => ({ id: m.factorId })) ?? [];
+    return <MFAChallenge factors={factors} />;
+  }
+
+  // ─── STATS ───────────────────────────────────────────────────────
+  if (screen === 'stats') return <StatsScreen user={user} onBack={() => setScreen('home')} />;
+
+  // ─── LOADING ─────────────────────────────────────────────────────
   if (screen === 'loading') {
     return (
       <div style={{ ...S.wrap, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <div style={{ textAlign: 'center' }}>
           <div style={{ fontSize: 40, color: '#C9A227', marginBottom: 16 }}>○</div>
-          <div style={{ color: '#6b7084', letterSpacing: 2, textTransform: 'uppercase', fontSize: 13 }}>
-            Loading questions...
-          </div>
+          <div style={{ color: '#6b7084', letterSpacing: 2, textTransform: 'uppercase', fontSize: 13 }}>Loading questions...</div>
         </div>
       </div>
     );
@@ -142,10 +141,19 @@ export default function App() {
   if (screen === 'home') {
     return (
       <>
-        {error && (
-          <div style={{ background: '#2e1a1a', border: '1px solid #c0392b', borderRadius: 6, padding: '12px 16px', margin: '16px auto', maxWidth: 800, fontSize: 14, color: '#e74c3c' }}>
-            {error}
+        {user && (
+          <div style={S.topBar}>
+            <div style={S.topBarInner}>
+              <span>{profile?.display_name ?? user.email}</span>
+              <div style={{ display: 'flex', gap: 16 }}>
+                <button onClick={() => setScreen('stats')} style={{ background: 'none', border: 'none', color: '#C9A227', cursor: 'pointer', fontSize: 13, fontFamily: 'inherit' }}>My Stats</button>
+                <button onClick={signOut} style={{ background: 'none', border: 'none', color: '#4a4d60', cursor: 'pointer', fontSize: 13, fontFamily: 'inherit' }}>Sign Out</button>
+              </div>
+            </div>
           </div>
+        )}
+        {error && (
+          <div style={{ background: '#2e1a1a', border: '1px solid #c0392b', borderRadius: 6, padding: '12px 16px', margin: '16px auto', maxWidth: 800, fontSize: 14, color: '#e74c3c' }}>{error}</div>
         )}
         <HomeScreen onStart={handleStart} />
       </>
@@ -160,17 +168,10 @@ export default function App() {
           <div style={S.topBarInner}>
             <span>{sessionTotal} pts</span>
             <span>{score.played} played · {score.powers} pow · {score.negs} neg</span>
-            <button onClick={handleRestart} style={{ background: 'none', border: 'none', color: '#4a4d60', cursor: 'pointer', fontSize: 13, fontFamily: 'inherit' }}>
-              Quit
-            </button>
+            <button onClick={handleRestart} style={{ background: 'none', border: 'none', color: '#4a4d60', cursor: 'pointer', fontSize: 13, fontFamily: 'inherit' }}>Quit</button>
           </div>
         </div>
-        <TossupPlayer
-          tossup={queue[qIdx]}
-          onResult={handleTossupResult}
-          questionNum={qIdx + 1}
-          total={queue.length}
-        />
+        <TossupPlayer tossup={queue[qIdx]} onResult={handleTossupResult} questionNum={qIdx + 1} total={queue.length} />
       </div>
     );
   }
@@ -185,11 +186,7 @@ export default function App() {
             <span>{score.played} played · {score.powers} pow · {score.negs} neg</span>
           </div>
         </div>
-        <BonusPlayer
-          bonus={currentBonus}
-          tossupAnswer={lastTossupAnswer}
-          onDone={handleBonusDone}
-        />
+        <BonusPlayer bonus={currentBonus} tossupAnswer={lastTossupAnswer} onDone={handleBonusDone} />
       </div>
     );
   }
@@ -198,7 +195,6 @@ export default function App() {
   if (screen === 'results') {
     const maxPossible = queue.length * 45;
     const pct = maxPossible > 0 ? Math.round((sessionTotal / maxPossible) * 100) : 0;
-
     return (
       <div style={S.wrap}>
         <div style={S.box}>
@@ -206,7 +202,6 @@ export default function App() {
             <div style={{ fontSize: 56, fontWeight: 700, color: '#C9A227', lineHeight: 1 }}>{sessionTotal}</div>
             <div style={{ color: '#6b7084', fontSize: 14, marginTop: 8, letterSpacing: 2, textTransform: 'uppercase' }}>total points</div>
           </div>
-
           <div style={S.card}>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 0 }}>
               {[
@@ -224,15 +219,12 @@ export default function App() {
               ))}
             </div>
           </div>
-
           <div style={{ display: 'flex', gap: 12, justifyContent: 'center', marginTop: 8, flexWrap: 'wrap' }}>
-            <button style={S.btn()} onClick={() => filters && handleStart(filters)}>
-              Practice Again
-            </button>
-            <button style={S.btn('#6b7084', true)} onClick={handleRestart}>
-              Change Settings
-            </button>
+            <button style={S.btn()} onClick={() => filters && handleStart(filters)}>Practice Again</button>
+            {user && <button style={S.btn('#20B2AA', true)} onClick={() => setScreen('stats')}>View Stats</button>}
+            <button style={S.btn('#6b7084', true)} onClick={handleRestart}>Change Settings</button>
           </div>
+          {!user && <p style={{ textAlign: 'center', fontSize: 12, color: '#4a4d60', marginTop: 16 }}>Sign in to save your progress and track stats over time.</p>}
         </div>
       </div>
     );
