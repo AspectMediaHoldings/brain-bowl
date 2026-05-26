@@ -124,10 +124,10 @@ export default function TossupPlayer({ tossup, onResult, questionNum, total, def
               onChange={e => setSpeed(Number(e.target.value))}
               style={{ background: '#12131a', border: '1px solid #1e2030', color: '#6b7084', fontSize: 12, padding: '4px 8px', borderRadius: 4 }}
             >
-              <option value={200}>Slow</option>
-              <option value={120}>Normal</option>
-              <option value={70}>Fast</option>
-              <option value={30}>Very Fast</option>
+              <option value={400}>Slow</option>
+              <option value={240}>Normal</option>
+              <option value={140}>Fast</option>
+              <option value={60}>Very Fast</option>
             </select>
           </div>
         </div>

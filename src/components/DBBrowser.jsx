@@ -3,6 +3,7 @@ import {
   ALL_CATEGORIES, SUBCATEGORIES, ALT_SUBCATEGORIES,
   DIFFICULTY_LABELS, fetchSetList, searchQuestions,
 } from '../utils/qbApi';
+import FrequencyList from './FrequencyList';
 
 const ALL_DIFFS = [1, 2, 3, 4, 5, 6, 7, 8, 9];
 const PAGE_SIZE = 25;
@@ -89,6 +90,8 @@ function BonusCard({ b }) {
 }
 
 export default function DBBrowser({ onBack, onStart }) {
+  const [tab, setTab] = useState('practice');
+
   // Search
   const [query, setQuery] = useState('');
   const [questionType, setQuestionType] = useState('all');
@@ -166,7 +169,7 @@ export default function DBBrowser({ onBack, onStart }) {
       subcategories: selSubs,
       difficulties: [3, 4, 5],
       num: 20,
-      speed: 240,
+      speed: 400,
       setName: selSets.length === 1 ? selSets[0] : undefined,
     });
   }
@@ -184,10 +187,36 @@ export default function DBBrowser({ onBack, onStart }) {
     <div style={S.wrap}>
       <div style={S.box}>
         {/* Header */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
           <div style={{ fontSize: 20, fontWeight: 700, color: '#C9A227', letterSpacing: 2, textTransform: 'uppercase' }}>Question Database</div>
           <button style={S.btn('#6b7084', true)} onClick={onBack}>Back</button>
         </div>
+
+        {/* TAB BAR */}
+        <div style={{ display: 'flex', gap: 0, marginBottom: 20, borderBottom: '1px solid #1e2030' }}>
+          {[
+            { id: 'practice', label: 'Practice & Search' },
+            { id: 'frequency', label: 'Frequency List' },
+          ].map(t => (
+            <button
+              key={t.id}
+              onClick={() => setTab(t.id)}
+              style={{
+                padding: '10px 20px', fontSize: 13, fontWeight: tab === t.id ? 700 : 400,
+                background: 'none', border: 'none', borderBottom: tab === t.id ? '2px solid #C9A227' : '2px solid transparent',
+                color: tab === t.id ? '#C9A227' : '#6b7084', cursor: 'pointer',
+                fontFamily: 'inherit', letterSpacing: 1, marginBottom: -1,
+              }}
+            >
+              {t.label}
+            </button>
+          ))}
+        </div>
+
+        {/* FREQUENCY TAB */}
+        {tab === 'frequency' && <FrequencyList />}
+
+        {tab === 'practice' && <>
 
         {/* SEARCH */}
         <div style={S.card}>
@@ -352,6 +381,8 @@ export default function DBBrowser({ onBack, onStart }) {
             )}
           </>
         )}
+
+        </>}
       </div>
     </div>
   );
