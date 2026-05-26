@@ -138,7 +138,7 @@ export default function App() {
   if (screen === 'db') return (
     <DBBrowser
       onBack={() => setScreen('home')}
-      onSelectSet={(setName) => handleStart({ setName, categories: [], difficulties: [3, 4, 5], num: 20, speed: 240 })}
+      onStart={(opts) => handleStart(opts)}
     />
   );
 
