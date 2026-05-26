@@ -54,9 +54,9 @@ with pm.Model(coords=coords) as linear_model:
 
     # Priors
     # TODO: Adjust prior parameters based on your domain knowledge
-    alpha = pm.Normal('alpha', mu=0, sigma=10)
-    beta = pm.Normal('beta', mu=0, sigma=10, dims='predictors')
-    sigma = pm.HalfNormal('sigma', sigma=5)
+    alpha = pm.Normal('alpha', mu=0, sigma=1)
+    beta = pm.Normal('beta', mu=0, sigma=1, dims='predictors')
+    sigma = pm.HalfNormal('sigma', sigma=1)
 
     # Linear predictor
     mu = alpha + pm.math.dot(X_scaled_data, beta)
