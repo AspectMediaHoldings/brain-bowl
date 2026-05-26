@@ -42,15 +42,16 @@ X_scaled = (X - X_mean) / X_std
 # 2. BUILD MODEL
 # =============================================================================
 
-# TODO: Customize predictor names
-predictor_names = ['predictor1', 'predictor2', 'predictor3']
+predictor_names = [f'predictor{i+1}' for i in range(X.shape[1])]
 
 coords = {
     'predictors': predictor_names,
-    'obs_id': np.arange(len(y))
 }
 
 with pm.Model(coords=coords) as linear_model:
+    # Data container for out-of-sample predictions
+    X_scaled_data = pm.Data('X_scaled', X_scaled)
+
     # Priors
     # TODO: Adjust prior parameters based on your domain knowledge
     alpha = pm.Normal('alpha', mu=0, sigma=1)
@@ -58,10 +59,10 @@ with pm.Model(coords=coords) as linear_model:
     sigma = pm.HalfNormal('sigma', sigma=1)
 
     # Linear predictor
-    mu = alpha + pm.math.dot(X_scaled, beta)
+    mu = alpha + pm.math.dot(X_scaled_data, beta)
 
     # Likelihood
-    y_obs = pm.Normal('y_obs', mu=mu, sigma=sigma, observed=y, dims='obs_id')
+    y_obs = pm.Normal('y_obs', mu=mu, sigma=sigma, observed=y, shape=X_scaled_data.shape[0])
 
 # =============================================================================
 # 3. PRIOR PREDICTIVE CHECK
@@ -188,33 +189,32 @@ beta_samples = idata.posterior['beta']
 for i, name in enumerate(predictor_names):
     mean = beta_samples.sel(predictors=name).mean().item()
     hdi = az.hdi(beta_samples.sel(predictors=name), hdi_prob=0.95)
-    print(f"{name:20s}: {mean:7.3f}  [95% HDI: {hdi.values[0]:7.3f}, {hdi.values[1]:7.3f}]")
+    print(f"{name:20s}: {mean:7.3f}  [95% HDI: {hdi['beta'].values[0]:7.3f}, {hdi['beta'].values[1]:7.3f}]")
 
 # =============================================================================
 # 8. PREDICTIONS FOR NEW DATA
 # =============================================================================
 
 # TODO: Provide new data for predictions
-# X_new = np.array([[...], [...], ...])  # New predictor values
-
 # For demonstration, use some test data
 X_new = np.random.randn(10, n_predictors)
 X_new_scaled = (X_new - X_mean) / X_std
 
 # Update model data and predict
 with linear_model:
-    pm.set_data({'X_scaled': X_new_scaled, 'obs_id': np.arange(len(X_new))})
+    pm.set_data({'X_scaled': X_new_scaled})
 
     post_pred = pm.sample_posterior_predictive(
         idata.posterior,
         var_names=['y_obs'],
+        predictions=True,
         random_seed=42
     )
 
 # Extract predictions
-y_pred_samples = post_pred.posterior_predictive['y_obs']
+y_pred_samples = post_pred.predictions['y_obs']
 y_pred_mean = y_pred_samples.mean(dim=['chain', 'draw']).values
-y_pred_hdi = az.hdi(y_pred_samples, hdi_prob=0.95).values
+y_pred_hdi = az.hdi(post_pred.predictions, hdi_prob=0.95)['y_obs'].values
 
 print("\n" + "="*60)
 print("PREDICTIONS FOR NEW DATA")

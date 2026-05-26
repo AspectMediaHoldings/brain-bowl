@@ -38,13 +38,13 @@ def init_client(config):
         )
     except ImportError:
         print("❌ labarchives-py package not installed")
-        print("   Install with: pip install git+https://github.com/mcmero/labarchives-py")
+        print("   Install with: pip install defusedxml git+https://github.com/mcmero/labarchives-py")
         sys.exit(1)
 
 
 def get_user_id(client, config):
     """Get user ID via authentication"""
-    import xml.etree.ElementTree as ET
+    import defusedxml.ElementTree as ET
 
     login_params = {
         'login_or_email': config['user_email'],
@@ -95,7 +95,7 @@ def create_entry(client, uid, nbid, title, content=None, date=None):
 
             # Try to extract entry ID from response
             try:
-                import xml.etree.ElementTree as ET
+                import defusedxml.ElementTree as ET
                 root = ET.fromstring(response.content)
                 entry_id = root.find('.//entry_id')
                 if entry_id is not None:

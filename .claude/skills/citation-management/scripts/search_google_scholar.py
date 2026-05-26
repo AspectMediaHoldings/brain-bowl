@@ -12,6 +12,7 @@ import argparse
 import json
 import time
 import random
+import itertools
 from typing import List, Dict, Optional
 
 try:
@@ -73,38 +74,49 @@ class GoogleScholarSearcher:
             # Perform search
             search_query = scholarly.search_pubs(query)
             
-            for i, result in enumerate(search_query):
-                if i >= max_results:
+            # Google Scholar typically returns 10 results per page.
+            # Batching processing to sleep once per page instead of once per item.
+            batch_size = 10
+            fetched = 0
+
+            while fetched < max_results:
+                current_batch_size = min(batch_size, max_results - fetched)
+                # Fetch a batch of results. This evaluates the generator lazily up to current_batch_size.
+                batch = list(itertools.islice(search_query, current_batch_size))
+                
+                if not batch:
                     break
+
+                for result in batch:
+                    fetched += 1
+                    print(f'Retrieved {fetched}/{max_results}', file=sys.stderr)
+
+                    # Extract metadata
+                    metadata = {
+                        'title': result.get('bib', {}).get('title', ''),
+                        'authors': ', '.join(result.get('bib', {}).get('author', [])),
+                        'year': result.get('bib', {}).get('pub_year', ''),
+                        'venue': result.get('bib', {}).get('venue', ''),
+                        'abstract': result.get('bib', {}).get('abstract', ''),
+                        'citations': result.get('num_citations', 0),
+                        'url': result.get('pub_url', ''),
+                        'eprint_url': result.get('eprint_url', ''),
+                    }
+
+                    # Filter by year
+                    if year_start or year_end:
+                        try:
+                            pub_year = int(metadata['year']) if metadata['year'] else 0
+                            if year_start and pub_year < year_start:
+                                continue
+                            if year_end and pub_year > year_end:
+                                continue
+                        except ValueError:
+                            pass
+
+                    results.append(metadata)
                 
-                print(f'Retrieved {i+1}/{max_results}', file=sys.stderr)
-                
-                # Extract metadata
-                metadata = {
-                    'title': result.get('bib', {}).get('title', ''),
-                    'authors': ', '.join(result.get('bib', {}).get('author', [])),
-                    'year': result.get('bib', {}).get('pub_year', ''),
-                    'venue': result.get('bib', {}).get('venue', ''),
-                    'abstract': result.get('bib', {}).get('abstract', ''),
-                    'citations': result.get('num_citations', 0),
-                    'url': result.get('pub_url', ''),
-                    'eprint_url': result.get('eprint_url', ''),
-                }
-                
-                # Filter by year
-                if year_start or year_end:
-                    try:
-                        pub_year = int(metadata['year']) if metadata['year'] else 0
-                        if year_start and pub_year < year_start:
-                            continue
-                        if year_end and pub_year > year_end:
-                            continue
-                    except ValueError:
-                        pass
-                
-                results.append(metadata)
-                
-                # Rate limiting to avoid blocking
+                # Rate limiting to avoid blocking (sleep once per batch/page)
                 time.sleep(random.uniform(2, 5))
             
         except Exception as e:

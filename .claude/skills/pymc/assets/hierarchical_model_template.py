@@ -45,51 +45,79 @@ groups = np.repeat(np.arange(n_groups), n_per_group)
 X = np.random.randn(n_obs)
 y = group_alphas[groups] + group_betas[groups] * X + np.random.randn(n_obs) * true_sigma
 
-# TODO: Customize group names
-group_names = [f'Group_{i}' for i in range(n_groups)]
+group_names = [f'Group_{chr(65+i)}' for i in range(n_groups)]
 
 # =============================================================================
 # 2. BUILD HIERARCHICAL MODEL
 # =============================================================================
 
-print("Building hierarchical model...")
+def build_hierarchical_model(X, y, groups, group_names, hyperpriors=None):
+    """
+    Builds a Bayesian hierarchical model.
+    """
+    if hyperpriors is None:
+        # Default weakly informative hyperpriors
+        hyperpriors = {
+            'mu_alpha_mu': 0.0,
+            'mu_alpha_sigma': 10.0,
+            'sigma_alpha_sigma': 5.0,
+            'mu_beta_mu': 0.0,
+            'mu_beta_sigma': 10.0,
+            'sigma_beta_sigma': 5.0,
+            'sigma_sigma': 5.0
+        }
 
-coords = {
-    'groups': group_names,
-    'obs': np.arange(n_obs)
+    print("Building hierarchical model...")
+
+    coords = {
+        'groups': group_names,
+        'obs': np.arange(len(X))
+    }
+
+    with pm.Model(coords=coords) as model:
+        # Data containers (for later predictions)
+        X_data = pm.Data('X_data', X)
+        groups_data = pm.Data('groups_data', groups)
+
+        # Hyperpriors (population-level parameters)
+        mu_alpha = pm.Normal('mu_alpha', mu=hyperpriors['mu_alpha_mu'], sigma=hyperpriors['mu_alpha_sigma'])
+        sigma_alpha = pm.HalfNormal('sigma_alpha', sigma=hyperpriors['sigma_alpha_sigma'])
+
+        mu_beta = pm.Normal('mu_beta', mu=hyperpriors['mu_beta_mu'], sigma=hyperpriors['mu_beta_sigma'])
+        sigma_beta = pm.HalfNormal('sigma_beta', sigma=hyperpriors['sigma_beta_sigma'])
+
+        # Group-level parameters (non-centered parameterization)
+        # Non-centered parameterization improves sampling efficiency
+        alpha_offset = pm.Normal('alpha_offset', mu=0, sigma=1, dims='groups')
+        alpha = pm.Deterministic('alpha', mu_alpha + sigma_alpha * alpha_offset, dims='groups')
+
+        beta_offset = pm.Normal('beta_offset', mu=0, sigma=1, dims='groups')
+        beta = pm.Deterministic('beta', mu_beta + sigma_beta * beta_offset, dims='groups')
+
+        # Observation-level model
+        mu = alpha[groups_data] + beta[groups_data] * X_data
+
+        # Observation noise
+        sigma = pm.HalfNormal('sigma', sigma=hyperpriors['sigma_sigma'])
+
+        # Likelihood
+        y_obs = pm.Normal('y_obs', mu=mu, sigma=sigma, observed=y, shape=X_data.shape)
+
+    print("Model built successfully!")
+    return model
+
+# TODO: Adjust hyperpriors based on your domain knowledge
+custom_hyperpriors = {
+    'mu_alpha_mu': 0.0,
+    'mu_alpha_sigma': 10.0,
+    'sigma_alpha_sigma': 5.0,
+    'mu_beta_mu': 0.0,
+    'mu_beta_sigma': 10.0,
+    'sigma_beta_sigma': 5.0,
+    'sigma_sigma': 5.0
 }
 
-with pm.Model(coords=coords) as hierarchical_model:
-    # Data containers (for later predictions)
-    X_data = pm.Data('X_data', X)
-    groups_data = pm.Data('groups_data', groups)
-
-    # Hyperpriors (population-level parameters)
-    # TODO: Adjust hyperpriors based on your domain knowledge
-    mu_alpha = pm.Normal('mu_alpha', mu=0, sigma=10)
-    sigma_alpha = pm.HalfNormal('sigma_alpha', sigma=5)
-
-    mu_beta = pm.Normal('mu_beta', mu=0, sigma=10)
-    sigma_beta = pm.HalfNormal('sigma_beta', sigma=5)
-
-    # Group-level parameters (non-centered parameterization)
-    # Non-centered parameterization improves sampling efficiency
-    alpha_offset = pm.Normal('alpha_offset', mu=0, sigma=1, dims='groups')
-    alpha = pm.Deterministic('alpha', mu_alpha + sigma_alpha * alpha_offset, dims='groups')
-
-    beta_offset = pm.Normal('beta_offset', mu=0, sigma=1, dims='groups')
-    beta = pm.Deterministic('beta', mu_beta + sigma_beta * beta_offset, dims='groups')
-
-    # Observation-level model
-    mu = alpha[groups_data] + beta[groups_data] * X_data
-
-    # Observation noise
-    sigma = pm.HalfNormal('sigma', sigma=5)
-
-    # Likelihood
-    y_obs = pm.Normal('y_obs', mu=mu, sigma=sigma, observed=y, dims='obs')
-
-print("Model built successfully!")
+hierarchical_model = build_hierarchical_model(X, y, groups, group_names, hyperpriors=custom_hyperpriors)
 print(f"Groups: {n_groups}")
 print(f"Observations: {n_obs}")
 
@@ -265,34 +293,34 @@ print("Shrinkage plot saved to 'shrinkage_plot.png'")
 # 8. PREDICTIONS FOR NEW DATA
 # =============================================================================
 
-# TODO: Specify new data
-# For existing groups:
-# new_X = np.array([...])
-# new_groups = np.array([0, 1, 2, ...])  # Existing group indices
-
-# For a new group (predict using population-level parameters):
-# Just use mu_alpha and mu_beta
-
 print("\n" + "="*60)
 print("PREDICTIONS FOR NEW DATA")
 print("="*60)
 
+# TODO: Specify new data for predictions
 # Example: Predict for existing groups
 new_X = np.array([-2, -1, 0, 1, 2])
 new_groups = np.array([0, 2, 4, 6, 8])  # Select some groups
 
-with hierarchical_model:
-    pm.set_data({'X_data': new_X, 'groups_data': new_groups, 'obs': np.arange(len(new_X))})
+# For a new group (predict using population-level parameters):
+# Just use mu_alpha and mu_beta
 
-    post_pred = pm.sample_posterior_predictive(
-        idata.posterior,
-        var_names=['y_obs'],
-        random_seed=42
+with hierarchical_model:
+    pm.set_data(
+        {'X_data': new_X, 'groups_data': new_groups},
+        coords={'obs': np.arange(len(new_X))}
     )
 
-y_pred_samples = post_pred.posterior_predictive['y_obs']
+    post_pred = pm.sample_posterior_predictive(
+        idata,
+        var_names=['y_obs'],
+        random_seed=42,
+        predictions=True
+    )
+
+y_pred_samples = post_pred.predictions['y_obs']
 y_pred_mean = y_pred_samples.mean(dim=['chain', 'draw']).values
-y_pred_hdi = az.hdi(y_pred_samples, hdi_prob=0.95).values
+y_pred_hdi = az.hdi(y_pred_samples, hdi_prob=0.95)['y_obs'].values
 
 print(f"Predictions for existing groups:")
 print(f"{'Group':<10} {'X':<10} {'Mean':<15} {'95% HDI Lower':<15} {'95% HDI Upper':<15}")

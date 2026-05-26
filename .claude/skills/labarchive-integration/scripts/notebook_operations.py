@@ -37,13 +37,13 @@ def init_client(config):
         )
     except ImportError:
         print("❌ labarchives-py package not installed")
-        print("   Install with: pip install git+https://github.com/mcmero/labarchives-py")
+        print("   Install with: pip install defusedxml git+https://github.com/mcmero/labarchives-py")
         sys.exit(1)
 
 
 def get_user_id(client, config):
     """Get user ID via authentication"""
-    import xml.etree.ElementTree as ET
+    import defusedxml.ElementTree as ET
 
     login_params = {
         'login_or_email': config['user_email'],
@@ -68,7 +68,7 @@ def get_user_id(client, config):
 
 def list_notebooks(client, uid):
     """List all accessible notebooks for a user"""
-    import xml.etree.ElementTree as ET
+    import defusedxml.ElementTree as ET
 
     print(f"\n📚 Listing notebooks for user ID: {uid}\n")
 
