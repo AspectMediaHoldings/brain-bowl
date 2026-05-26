@@ -197,8 +197,6 @@ for i, name in enumerate(predictor_names):
 # =============================================================================
 
 # TODO: Provide new data for predictions
-# X_new = np.array([[...], [...], ...])  # New predictor values
-
 # For demonstration, use some test data
 X_new = np.random.randn(10, n_predictors)
 X_new_scaled = (X_new - X_mean) / X_std

@@ -297,9 +297,13 @@ print("\n" + "="*60)
 print("PREDICTIONS FOR NEW DATA")
 print("="*60)
 
+# TODO: Specify new data for predictions
 # Example: Predict for existing groups
 new_X = np.array([-2, -1, 0, 1, 2])
 new_groups = np.array([0, 2, 4, 6, 8])  # Select some groups
+
+# For a new group (predict using population-level parameters):
+# Just use mu_alpha and mu_beta
 
 with hierarchical_model:
     pm.set_data(
