@@ -70,6 +70,70 @@ export async function fetchRandomBonus({
   return isValidBonus(bonus) ? bonus : null;
 }
 
+export const ALL_CATEGORIES = [
+  'Literature', 'History', 'Science', 'Fine Arts',
+  'Mythology', 'Philosophy', 'Religion', 'Geography',
+  'Social Science', 'Current Events', 'Other Academic', 'Pop Culture',
+];
+
+export const SUBCATEGORIES = {
+  'Literature':     ['American Literature', 'British Literature', 'Classical Literature', 'European Literature', 'World Literature', 'Other Literature'],
+  'History':        ['American History', 'Ancient History', 'European History', 'World History', 'Other History'],
+  'Science':        ['Biology', 'Chemistry', 'Physics', 'Other Science'],
+  'Fine Arts':      ['Visual Fine Arts', 'Auditory Fine Arts', 'Other Fine Arts'],
+  'Religion':       [], 'Mythology': [], 'Philosophy': [],
+  'Social Science': [], 'Current Events': [], 'Geography': [], 'Other Academic': [],
+  'Pop Culture':    ['Movies', 'Music', 'Sports', 'Television', 'Video Games', 'Other Pop Culture'],
+};
+
+export const ALT_SUBCATEGORIES = {
+  'Literature':     ['Drama', 'Long Fiction', 'Poetry', 'Short Fiction', 'Misc Literature'],
+  'Science':        ['Math', 'Astronomy', 'Computer Science', 'Earth Science', 'Engineering', 'Misc Science'],
+  'Fine Arts':      ['Architecture', 'Dance', 'Film', 'Jazz', 'Musicals', 'Opera', 'Photography', 'Misc Arts'],
+  'Social Science': ['Anthropology', 'Economics', 'Linguistics', 'Psychology', 'Sociology', 'Other Social Science'],
+};
+
+export async function fetchFrequencyList({
+  subcategory, category, alternateSubcategory,
+  difficulties = [3, 4, 5], limit = 50, questionType = 'all',
+  minYear, maxYear,
+} = {}) {
+  const params = { difficulties: difficulties.join(','), limit, questionType };
+  if (subcategory) params.subcategory = subcategory;
+  else if (alternateSubcategory) params.alternateSubcategory = alternateSubcategory;
+  else if (category) params.category = category;
+  if (minYear) params.minYear = minYear;
+  if (maxYear) params.maxYear = maxYear;
+  const data = await apiFetch('frequency-list', params);
+  return data.frequencyList ?? [];
+}
+
+export async function fetchSetList() {
+  const data = await apiFetch('set-list');
+  return data.setList ?? [];
+}
+
+export async function searchQuestions({
+  query = '', categories = [], difficulties = [],
+  questionType = 'all', searchType = 'all',
+  maxReturnLength = 25, tossupPagination = 1, bonusPagination = 1,
+  minYear, maxYear,
+} = {}) {
+  const params = {
+    queryString: query, questionType, searchType,
+    maxReturnLength, tossupPagination, bonusPagination,
+  };
+  if (categories.length) params.categories = categories.join(',');
+  if (difficulties.length) params.difficulties = difficulties.join(',');
+  if (minYear) params.minYear = minYear;
+  if (maxYear) params.maxYear = maxYear;
+  const data = await apiFetch('query', params);
+  return {
+    tossups: data.tossups ?? { count: 0, questionArray: [] },
+    bonuses: data.bonuses ?? { count: 0, questionArray: [] },
+  };
+}
+
 export async function checkAnswer(answerline, givenAnswer, strictness = 2) {
   try {
     const result = await apiFetch('check-answer', { answerline, givenAnswer, strictness });
