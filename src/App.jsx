@@ -182,14 +182,13 @@ export default function App() {
         )}
         {navItems.length > 0 && (
           <div style={{ maxWidth: 800, margin: '0 auto', padding: '16px 20px 0' }}>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: 10 }}>
+            <div style={{ fontSize: 11, color: '#6b7084', letterSpacing: 2, textTransform: 'uppercase', marginBottom: 8 }}>Quick Access</div>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
               {navItems.map(({ label, sub, color, onClick }) => (
                 <button
                   key={label}
                   onClick={onClick}
-                  style={{ background: '#12131a', border: `1px solid ${color}88`, borderRadius: 8, padding: '14px 12px', cursor: 'pointer', textAlign: 'left', fontFamily: 'inherit' }}
-                  onMouseEnter={e => { e.currentTarget.style.borderColor = color; }}
-                  onMouseLeave={e => { e.currentTarget.style.borderColor = color + '88'; }}
+                  style={{ flex: '1 1 140px', background: '#12131a', border: `2px solid ${color}`, borderRadius: 8, padding: '14px 12px', cursor: 'pointer', textAlign: 'left', fontFamily: 'inherit' }}
                 >
                   <div style={{ fontSize: 13, fontWeight: 700, color, marginBottom: 3 }}>{label}</div>
                   <div style={{ fontSize: 11, color: '#8a8d9e' }}>{sub}</div>
