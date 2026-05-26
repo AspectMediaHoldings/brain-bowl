@@ -25,7 +25,7 @@ const TABS = [
   ['sets', 'Set List'],
 ];
 
-export default function DBBrowser({ onBack }) {
+export default function DBBrowser({ onBack, onSelectSet }) {
   const [tab, setTab] = useState('search');
 
   return (
@@ -42,7 +42,7 @@ export default function DBBrowser({ onBack }) {
         </div>
         {tab === 'search' && <DBSearch />}
         {tab === 'frequency' && <FrequencyList />}
-        {tab === 'sets' && <SetList />}
+        {tab === 'sets' && <SetList onSelectSet={onSelectSet} />}
       </div>
     </div>
   );

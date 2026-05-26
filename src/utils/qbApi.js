@@ -48,11 +48,13 @@ export async function fetchTossups({
   categories = [],
   difficulties = HS_DIFFICULTIES,
   num = 20,
+  setName,
 } = {}) {
   const data = await apiFetch('random-tossup', {
     difficulties: difficulties.join(','),
     categories: categories.length ? categories.join(',') : undefined,
     number: num,
+    setName: setName || undefined,
   });
   return (data.tossups ?? []).filter(isValidTossup);
 }

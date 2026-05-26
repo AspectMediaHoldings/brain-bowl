@@ -54,7 +54,7 @@ export default function App() {
     setError(null);
     setScreen('loading');
     try {
-      const tossups = await fetchTossups({ categories: opts.categories, difficulties: opts.difficulties, num: opts.num });
+      const tossups = await fetchTossups({ categories: opts.categories, difficulties: opts.difficulties, num: opts.num, setName: opts.setName });
       if (!tossups.length) { setError('No questions returned. Try different settings.'); setScreen('home'); return; }
       setQueue(tossups);
       setQIdx(0);
@@ -135,7 +135,12 @@ export default function App() {
   }
 
   // ─── DATABASE ────────────────────────────────────────────────────
-  if (screen === 'db') return <DBBrowser onBack={() => setScreen('home')} />;
+  if (screen === 'db') return (
+    <DBBrowser
+      onBack={() => setScreen('home')}
+      onSelectSet={(setName) => handleStart({ setName, categories: [], difficulties: [3, 4, 5], num: 20, speed: 240 })}
+    />
+  );
 
   // ─── STATS ───────────────────────────────────────────────────────
   if (screen === 'stats') return <StatsScreen user={user} onBack={() => setScreen('home')} />;
