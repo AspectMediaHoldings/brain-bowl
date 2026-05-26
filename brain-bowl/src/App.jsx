@@ -160,31 +160,45 @@ export default function App() {
 
   // ─── HOME ────────────────────────────────────────────────────────
   if (screen === 'home') {
+    const navItems = [
+      { label: 'Question Database', sub: 'Search · Frequency · Sets', color: '#a0a3b0', onClick: () => setScreen('db'), show: true },
+      { label: 'My Stats', sub: 'Session history & trends', color: '#C9A227', onClick: () => setScreen('stats'), show: !!user },
+      { label: 'Coach Roster', sub: 'Manage your students', color: '#20B2AA', onClick: () => setScreen('coach'), show: isCoach },
+      { label: 'Admin Panel', sub: 'Users · Assignments · Activity', color: '#f5c518', onClick: () => setScreen('admin'), show: isAdmin },
+    ].filter(n => n.show);
+
     return (
       <>
         {user && (
           <div style={S.topBar}>
             <div style={S.topBarInner}>
               <span>{profile?.display_name ?? user.email}</span>
-              <div style={{ display: 'flex', gap: 16 }}>
-                <button onClick={() => setScreen('db')} style={{ background: 'none', border: 'none', color: '#a0a3b0', cursor: 'pointer', fontSize: 13, fontFamily: 'inherit' }}>Database</button>
-                <button onClick={() => setScreen('stats')} style={{ background: 'none', border: 'none', color: '#C9A227', cursor: 'pointer', fontSize: 13, fontFamily: 'inherit' }}>My Stats</button>
-                {isCoach && <button onClick={() => setScreen('coach')} style={{ background: 'none', border: 'none', color: '#20B2AA', cursor: 'pointer', fontSize: 13, fontFamily: 'inherit' }}>My Roster</button>}
-                {isAdmin && <button onClick={() => setScreen('admin')} style={{ background: 'none', border: 'none', color: '#f5c518', cursor: 'pointer', fontSize: 13, fontFamily: 'inherit' }}>Admin</button>}
-                <button onClick={signOut} style={{ background: 'none', border: 'none', color: '#4a4d60', cursor: 'pointer', fontSize: 13, fontFamily: 'inherit' }}>Sign Out</button>
-              </div>
+              <button onClick={signOut} style={{ background: 'none', border: 'none', color: '#4a4d60', cursor: 'pointer', fontSize: 13, fontFamily: 'inherit' }}>Sign Out</button>
             </div>
-          </div>
-        )}
-        {!user && (
-          <div style={{ textAlign: 'right', padding: '8px 20px', maxWidth: 800, margin: '0 auto' }}>
-            <button onClick={() => setScreen('db')} style={{ background: 'none', border: 'none', color: '#a0a3b0', cursor: 'pointer', fontSize: 13, fontFamily: 'inherit' }}>Database</button>
           </div>
         )}
         {error && (
           <div style={{ background: '#2e1a1a', border: '1px solid #c0392b', borderRadius: 6, padding: '12px 16px', margin: '16px auto', maxWidth: 800, fontSize: 14, color: '#e74c3c' }}>{error}</div>
         )}
-        <HomeScreen onStart={handleStart} onDatabase={() => setScreen('db')} />
+        {navItems.length > 0 && (
+          <div style={{ maxWidth: 800, margin: '0 auto', padding: '16px 20px 0' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: `repeat(${Math.min(navItems.length, 4)}, 1fr)`, gap: 10 }}>
+              {navItems.map(({ label, sub, color, onClick }) => (
+                <button
+                  key={label}
+                  onClick={onClick}
+                  style={{ background: '#12131a', border: `1px solid ${color}44`, borderRadius: 8, padding: '14px 12px', cursor: 'pointer', textAlign: 'left', fontFamily: 'inherit' }}
+                  onMouseEnter={e => { e.currentTarget.style.borderColor = color + 'aa'; }}
+                  onMouseLeave={e => { e.currentTarget.style.borderColor = color + '44'; }}
+                >
+                  <div style={{ fontSize: 13, fontWeight: 700, color, marginBottom: 3 }}>{label}</div>
+                  <div style={{ fontSize: 11, color: '#4a4d60' }}>{sub}</div>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+        <HomeScreen onStart={handleStart} />
       </>
     );
   }
