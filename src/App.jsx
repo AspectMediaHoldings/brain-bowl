@@ -8,6 +8,7 @@ import MFASetup from './components/MFASetup';
 import StatsScreen from './components/StatsScreen';
 import CoachDashboard from './components/CoachDashboard';
 import AdminDashboard from './components/AdminDashboard';
+import DBBrowser from './components/DBBrowser';
 import { fetchTossups, fetchRandomBonus } from './utils/qbApi';
 import { useAuth } from './hooks/useAuth';
 import { useSession } from './hooks/useSession';
@@ -133,6 +134,9 @@ export default function App() {
     return <MFAChallenge factors={factors} />;
   }
 
+  // ─── DATABASE ────────────────────────────────────────────────────
+  if (screen === 'db') return <DBBrowser onBack={() => setScreen('home')} />;
+
   // ─── STATS ───────────────────────────────────────────────────────
   if (screen === 'stats') return <StatsScreen user={user} onBack={() => setScreen('home')} />;
 
@@ -163,12 +167,18 @@ export default function App() {
             <div style={S.topBarInner}>
               <span>{profile?.display_name ?? user.email}</span>
               <div style={{ display: 'flex', gap: 16 }}>
+                <button onClick={() => setScreen('db')} style={{ background: 'none', border: 'none', color: '#a0a3b0', cursor: 'pointer', fontSize: 13, fontFamily: 'inherit' }}>Database</button>
                 <button onClick={() => setScreen('stats')} style={{ background: 'none', border: 'none', color: '#C9A227', cursor: 'pointer', fontSize: 13, fontFamily: 'inherit' }}>My Stats</button>
                 {isCoach && <button onClick={() => setScreen('coach')} style={{ background: 'none', border: 'none', color: '#20B2AA', cursor: 'pointer', fontSize: 13, fontFamily: 'inherit' }}>My Roster</button>}
                 {isAdmin && <button onClick={() => setScreen('admin')} style={{ background: 'none', border: 'none', color: '#f5c518', cursor: 'pointer', fontSize: 13, fontFamily: 'inherit' }}>Admin</button>}
                 <button onClick={signOut} style={{ background: 'none', border: 'none', color: '#4a4d60', cursor: 'pointer', fontSize: 13, fontFamily: 'inherit' }}>Sign Out</button>
               </div>
             </div>
+          </div>
+        )}
+        {!user && (
+          <div style={{ textAlign: 'right', padding: '8px 20px', maxWidth: 800, margin: '0 auto' }}>
+            <button onClick={() => setScreen('db')} style={{ background: 'none', border: 'none', color: '#a0a3b0', cursor: 'pointer', fontSize: 13, fontFamily: 'inherit' }}>Database</button>
           </div>
         )}
         {error && (
