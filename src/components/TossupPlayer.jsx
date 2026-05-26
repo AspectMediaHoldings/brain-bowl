@@ -33,7 +33,7 @@ const S = {
   }),
 };
 
-export default function TossupPlayer({ tossup, onResult, questionNum, total, defaultSpeed = 120 }) {
+export default function TossupPlayer({ tossup, onResult, questionNum, total, defaultSpeed = 120, onSaveFlashcard }) {
   const words = useMemo(() => parseWords(tossup.question_sanitized ?? tossup.question ?? ''), [tossup.question_sanitized, tossup.question]);
   const powerIdx = useMemo(() => findPowerIdx(words), [words]);
 
@@ -43,6 +43,7 @@ export default function TossupPlayer({ tossup, onResult, questionNum, total, def
   const [judgment, setJudgment] = useState(null);
   const [paused, setPaused] = useState(false);
   const [speed, setSpeed] = useState(defaultSpeed);
+  const [savedFlash, setSavedFlash] = useState(false);
 
   const timerRef = useRef(null);
   const inputRef = useRef(null);
@@ -110,6 +111,13 @@ export default function TossupPlayer({ tossup, onResult, questionNum, total, def
 
   const tossupPts = isPowered ? 15 : 10;
 
+  async function handleSaveFlashcard() {
+    if (!onSaveFlashcard) return;
+    await onSaveFlashcard(words.slice(0, revealed).join(' '), tossup.answer);
+    setSavedFlash(true);
+    setTimeout(() => setSavedFlash(false), 2500);
+  }
+
   return (
     <div style={S.wrap}>
       <div style={S.box}>
@@ -163,6 +171,14 @@ export default function TossupPlayer({ tossup, onResult, questionNum, total, def
               <div style={{ marginTop: 8, color: '#f39c12', fontWeight: 700 }}>
                 Prompt: {judgment.directedPrompt || 'Be more specific'}
               </div>
+            )}
+            {onSaveFlashcard && judgment?.directive === 'accept' && (
+              <button
+                onClick={handleSaveFlashcard}
+                style={{ marginTop: 12, padding: '6px 14px', fontSize: 12, fontWeight: 700, background: 'transparent', border: '1px solid #20B2AA', borderRadius: 5, color: savedFlash ? '#27ae60' : '#20B2AA', cursor: 'pointer', fontFamily: 'inherit' }}
+              >
+                {savedFlash ? 'Saved!' : '+ Save as Flashcard'}
+              </button>
             )}
           </div>
         )}

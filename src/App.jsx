@@ -9,7 +9,9 @@ import StatsScreen from './components/StatsScreen';
 import CoachDashboard from './components/CoachDashboard';
 import AdminDashboard from './components/AdminDashboard';
 import DBBrowser from './components/DBBrowser';
+import FlashcardEditor from './components/FlashcardEditor';
 import { fetchTossups, fetchRandomBonus } from './utils/qbApi';
+import { quickSaveCard } from './utils/flashcards';
 import { useAuth } from './hooks/useAuth';
 import { useSession } from './hooks/useSession';
 
@@ -104,6 +106,7 @@ export default function App() {
   }, [filters]);
 
   const handleRestart = () => { setScreen('home'); setQueue([]); setScore({ ...INIT_SCORE }); setCurrentBonus(null); setError(null); };
+  const handleSaveFlashcard = (front, back) => quickSaveCard(user || null, front, back);
   const handleEndSession = () => setScreen('results');
 
   useEffect(() => {
@@ -222,7 +225,7 @@ export default function App() {
             </div>
           </div>
         </div>
-        <TossupPlayer key={qIdx} tossup={queue[qIdx]} onResult={handleTossupResult} questionNum={qIdx + 1} total={queue.length} defaultSpeed={filters?.speed ?? 240} />
+        <TossupPlayer key={qIdx} tossup={queue[qIdx]} onResult={handleTossupResult} questionNum={qIdx + 1} total={queue.length} defaultSpeed={filters?.speed ?? 240} onSaveFlashcard={handleSaveFlashcard} />
       </div>
     );
   }
