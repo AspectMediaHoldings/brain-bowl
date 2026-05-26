@@ -161,7 +161,7 @@ export default function App() {
   // ─── HOME ────────────────────────────────────────────────────────
   if (screen === 'home') {
     const navItems = [
-      { label: 'Question Database', sub: 'Search · Frequency · Sets', color: '#a0a3b0', onClick: () => setScreen('db'), show: true },
+      { label: 'Question Database', sub: 'Search · Frequency · Sets', color: '#7b9fff', onClick: () => setScreen('db'), show: true },
       { label: 'My Stats', sub: 'Session history & trends', color: '#C9A227', onClick: () => setScreen('stats'), show: !!user },
       { label: 'Coach Roster', sub: 'Manage your students', color: '#20B2AA', onClick: () => setScreen('coach'), show: isCoach },
       { label: 'Admin Panel', sub: 'Users · Assignments · Activity', color: '#f5c518', onClick: () => setScreen('admin'), show: isAdmin },
@@ -187,12 +187,12 @@ export default function App() {
                 <button
                   key={label}
                   onClick={onClick}
-                  style={{ background: '#12131a', border: `1px solid ${color}44`, borderRadius: 8, padding: '14px 12px', cursor: 'pointer', textAlign: 'left', fontFamily: 'inherit' }}
-                  onMouseEnter={e => { e.currentTarget.style.borderColor = color + 'aa'; }}
-                  onMouseLeave={e => { e.currentTarget.style.borderColor = color + '44'; }}
+                  style={{ background: '#12131a', border: `1px solid ${color}88`, borderRadius: 8, padding: '14px 12px', cursor: 'pointer', textAlign: 'left', fontFamily: 'inherit' }}
+                  onMouseEnter={e => { e.currentTarget.style.borderColor = color; }}
+                  onMouseLeave={e => { e.currentTarget.style.borderColor = color + '88'; }}
                 >
                   <div style={{ fontSize: 13, fontWeight: 700, color, marginBottom: 3 }}>{label}</div>
-                  <div style={{ fontSize: 11, color: '#4a4d60' }}>{sub}</div>
+                  <div style={{ fontSize: 11, color: '#8a8d9e' }}>{sub}</div>
                 </button>
               ))}
             </div>
