@@ -140,6 +140,11 @@ Produce a concise matrix: capability -> studio-grade standard -> what Avatar
 Studio does today -> the gap -> the fix. Group by the three disciplines. This is
 the contract for Phase 3, so be specific and grounded in the research.
 
+Save this matrix to
+`docs/research/avatar-studio/<YYYY-MM-DD>-gap-analysis.md`, commit it, and upload
+it to the "AI Avatar" Google Drive folder using the same save-and-upload method
+and graceful fallback described in Phase 1.5.
+
 ## Phase 3 — Full implementation (the deliverable)
 
 Update the skill and the MCP server so Avatar Studio performs at studio grade.
@@ -192,8 +197,12 @@ sentences, no em dashes or semicolons.
 
 Summarize: the new tool surface, before / after per discipline, the delivery-spec
 and loudness targets you adopted, the cost / quality presets, any new keys or
-dependencies, and the full source list from Phase 1. Commit on the working branch
-with clear messages. Do not open a pull request unless asked.
+dependencies, and the full source list from Phase 1. Write this report to
+`docs/research/avatar-studio/<YYYY-MM-DD>-studio-upgrade-report.md`, commit it,
+and upload it to the "AI Avatar" Google Drive folder using the same
+save-and-upload method and graceful fallback described in Phase 1.5. Commit all
+code changes on the working branch with clear messages. Do not open a pull
+request unless asked.
 
 ## Guardrails
 

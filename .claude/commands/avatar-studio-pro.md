@@ -103,7 +103,9 @@ Capture the Phase 1 findings plus the full source list as one Markdown file.
 ## Phase 2 — Gap analysis
 Produce a matrix: capability -> studio-grade standard -> what Avatar Studio does
 today -> the gap -> the fix. Group by the three disciplines. This is the contract
-for Phase 3.
+for Phase 3. Save it to `docs/research/avatar-studio/<YYYY-MM-DD>-gap-analysis.md`,
+commit it, and upload it to the "AI Avatar" Google Drive folder using the same
+save-and-upload method and graceful fallback as Phase 1.5.
 
 ## Phase 3 — Full implementation (the deliverable)
 Match the existing code style exactly: ESM `.mjs`, `zod` schemas, the existing
@@ -140,8 +142,12 @@ or semicolons.
 ## Phase 5 — Report
 Summarize the new tool surface, before / after per discipline, the delivery-spec
 and loudness targets adopted, the cost / quality presets, any new keys or
-dependencies, and the full source list. Commit on the current branch with clear
-messages. Do not open a pull request unless asked.
+dependencies, and the full source list. Write this report to
+`docs/research/avatar-studio/<YYYY-MM-DD>-studio-upgrade-report.md`, commit it,
+and upload it to the "AI Avatar" Google Drive folder using the same
+save-and-upload method and graceful fallback as Phase 1.5. Commit all code
+changes on the current branch with clear messages. Do not open a pull request
+unless asked.
 
 </phases>
 
