@@ -11,30 +11,30 @@ const S = {
   h2: { color: '#C9A227', fontSize: 13, letterSpacing: 2, textTransform: 'uppercase', margin: '0 0 14px', fontWeight: 700 },
   pill: (active) => ({
     display: 'inline-block', padding: '6px 14px', margin: '4px', fontSize: 13,
-    borderRadius: 20, cursor: 'pointer', border: `1px solid ${active ? '#C9A227' : '#2a2d40'}`,
-    background: active ? '#C9A22722' : 'transparent', color: active ? '#C9A227' : '#6b7084',
+    borderRadius: 20, cursor: 'pointer', border: `1px solid ${active ? '#C9A227' : '#4a4d70'}`,
+    background: active ? '#C9A22722' : 'transparent', color: active ? '#C9A227' : '#c0c3d0',
     fontFamily: 'inherit', fontWeight: active ? 700 : 400,
   }),
   startBtn: (disabled) => ({
     display: 'block', width: '100%', padding: '16px', fontSize: 16, fontWeight: 700,
-    background: disabled ? '#2a2d40' : '#C9A227', color: disabled ? '#4a4d60' : '#0a0b0f',
+    background: disabled ? '#2a2d40' : '#C9A227', color: disabled ? '#6b7084' : '#0a0b0f',
     border: 'none', borderRadius: 8, cursor: disabled ? 'not-allowed' : 'pointer',
     fontFamily: 'inherit', letterSpacing: 2, textTransform: 'uppercase', marginTop: 8,
   }),
 };
 
 const SPEEDS = [
-  { label: 'Slow', ms: 200 },
-  { label: 'Normal', ms: 120 },
-  { label: 'Fast', ms: 70 },
-  { label: 'Very Fast', ms: 30 },
+  { label: 'Slow', ms: 400 },
+  { label: 'Normal', ms: 240 },
+  { label: 'Fast', ms: 140 },
+  { label: 'Very Fast', ms: 60 },
 ];
 
 export default function HomeScreen({ onStart }) {
   const [categories, setCategories] = useState([]);
   const [difficulties, setDifficulties] = useState([...HS_DIFFICULTIES]);
   const [num, setNum] = useState(20);
-  const [speed, setSpeed] = useState(120);
+  const [speed, setSpeed] = useState(240);
 
   const toggleCategory = (cat) =>
     setCategories(p => p.includes(cat) ? p.filter(c => c !== cat) : [...p, cat]);
@@ -53,13 +53,13 @@ export default function HomeScreen({ onStart }) {
           <h1 style={{ fontSize: 28, fontWeight: 700, color: '#C9A227', letterSpacing: 3, textTransform: 'uppercase', margin: 0 }}>
             MHS Brain Bowl
           </h1>
-          <p style={{ fontSize: 12, color: '#6b7084', marginTop: 8, letterSpacing: 3, textTransform: 'uppercase' }}>
+          <p style={{ fontSize: 12, color: '#a0a3b0', marginTop: 8, letterSpacing: 3, textTransform: 'uppercase' }}>
             NAQT Pyramidal Practice · Live Packet Data
           </p>
         </div>
 
         <div style={{ ...S.card, marginTop: 24 }}>
-          <h2 style={S.h2}>Categories <span style={{ color: '#4a4d60', fontWeight: 400, textTransform: 'none', letterSpacing: 0 }}>(all if none selected)</span></h2>
+          <h2 style={S.h2}>Categories <span style={{ color: '#8a8d9e', fontWeight: 400, textTransform: 'none', letterSpacing: 0 }}>(all if none selected)</span></h2>
           <div>
             {CATEGORIES.map(cat => (
               <button key={cat} style={S.pill(categories.includes(cat))} onClick={() => toggleCategory(cat)}>
@@ -101,7 +101,7 @@ export default function HomeScreen({ onStart }) {
             onChange={e => setNum(Number(e.target.value))}
             style={{ width: '100%', accentColor: '#C9A227' }}
           />
-          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: '#4a4d60', marginTop: 4 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: '#8a8d9e', marginTop: 4 }}>
             <span>5</span><span>40</span>
           </div>
         </div>
@@ -114,7 +114,7 @@ export default function HomeScreen({ onStart }) {
           Start Practice
         </button>
 
-        <p style={{ textAlign: 'center', fontSize: 11, color: '#4a4d60', marginTop: 16 }}>
+        <p style={{ textAlign: 'center', fontSize: 11, color: '#8a8d9e', marginTop: 16 }}>
           Questions sourced live from qbreader.org · NAQT format
         </p>
       </div>
