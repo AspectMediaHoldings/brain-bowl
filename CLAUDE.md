@@ -54,6 +54,14 @@ Available gstack skills:
 Start: `node skill-manager/server.mjs` then open http://localhost:3333
 Indexes all 207 installed skills. Search, filter by category, or use Ask Claude to get a recommendation.
 
+## Project Notes
+- Avatar / personal-avatar video: use the `avatar-studio` skill
+  (`.claude/skills/avatar-studio/`) plus its MCP server
+  (`mcp-servers/avatar-studio/`). It does ElevenLabs voice cloning, fal.ai
+  lipsync drafts (default `veed/fabric-1.0`), HeyGen final renders, and FFmpeg
+  assembly. Needs `FAL_KEY` and `ELEVENLABS_API_KEY` in the server's
+  `~/.claude.json` block. Session memory: `docs/memory/2026-05-26-avatar-studio.md`.
+
 ## Skill routing
 
 When the user's request matches an available skill, invoke it via the Skill tool. When in doubt, invoke the skill.
