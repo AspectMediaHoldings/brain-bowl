@@ -24,7 +24,7 @@ export default function MFASetup() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    supabase.auth.mfa.enroll({ factorType: 'totp', issuer: 'MHS Brain Bowl' }).then(async ({ data, error: e }) => {
+    supabase.auth.mfa.enroll({ factorType: 'totp', issuer: 'Brain Bowl Practice' }).then(async ({ data, error: e }) => {
       if (e) { setError(e.message); return; }
       setFactorId(data.id);
       setSecret(data.totp.secret);

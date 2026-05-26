@@ -62,7 +62,7 @@ export default function AuthGate({ onGuest }) {
     <div style={S.wrap}>
       <div style={S.box}>
         <div style={S.card}>
-          <div style={S.title}>MHS Brain Bowl</div>
+          <div style={S.title}>Brain Bowl Practice</div>
           <div style={S.sub}>NAQT Pyramidal Practice</div>
 
           {error && <div style={S.err}>{error}</div>}

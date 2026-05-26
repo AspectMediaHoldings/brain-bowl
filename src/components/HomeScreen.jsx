@@ -68,7 +68,7 @@ export default function HomeScreen({ onStart }) {
       <div style={S.box}>
         <div style={S.hdr}>
           <h1 style={{ fontSize: 28, fontWeight: 700, color: '#C9A227', letterSpacing: 3, textTransform: 'uppercase', margin: 0 }}>
-            MHS Brain Bowl
+            Brain Bowl Practice
           </h1>
           <p style={{ fontSize: 12, color: '#a0a3b0', marginTop: 8, letterSpacing: 3, textTransform: 'uppercase' }}>
             NAQT Pyramidal Practice · Live Packet Data
