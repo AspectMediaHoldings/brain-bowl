@@ -54,7 +54,7 @@ export default function App() {
     setError(null);
     setScreen('loading');
     try {
-      const tossups = await fetchTossups({ categories: opts.categories, difficulties: opts.difficulties, num: opts.num, setName: opts.setName });
+      const tossups = await fetchTossups({ categories: opts.categories, subcategories: opts.subcategories ?? [], difficulties: opts.difficulties, num: opts.num, setName: opts.setName });
       if (!tossups.length) { setError('No questions returned. Try different settings.'); setScreen('home'); return; }
       setQueue(tossups);
       setQIdx(0);

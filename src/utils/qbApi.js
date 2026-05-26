@@ -46,6 +46,7 @@ function isValidBonus(b) {
 
 export async function fetchTossups({
   categories = [],
+  subcategories = [],
   difficulties = HS_DIFFICULTIES,
   num = 20,
   setName,
@@ -53,6 +54,7 @@ export async function fetchTossups({
   const data = await apiFetch('random-tossup', {
     difficulties: difficulties.join(','),
     categories: categories.length ? categories.join(',') : undefined,
+    subcategories: subcategories.length ? subcategories.join(',') : undefined,
     number: num,
     setName: setName || undefined,
   });

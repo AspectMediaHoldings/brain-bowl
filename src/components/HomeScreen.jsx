@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { CATEGORIES, DIFFICULTY_LABELS, HS_DIFFICULTIES } from '../utils/qbApi';
+import { CATEGORIES, SUBCATEGORIES, DIFFICULTY_LABELS, HS_DIFFICULTIES } from '../utils/qbApi';
 
 const SELECTABLE_DIFFICULTIES = [2, 3, 4, 5, 6].filter(d => d in DIFFICULTY_LABELS);
 
@@ -9,10 +9,10 @@ const S = {
   hdr: { textAlign: 'center', padding: '32px 0 16px', borderBottom: '1px solid #1e2030' },
   card: { background: '#12131a', border: '1px solid #1e2030', borderRadius: 8, padding: 24, marginBottom: 16 },
   h2: { color: '#C9A227', fontSize: 13, letterSpacing: 2, textTransform: 'uppercase', margin: '0 0 14px', fontWeight: 700 },
-  pill: (active) => ({
+  pill: (active, color = '#C9A227') => ({
     display: 'inline-block', padding: '6px 14px', margin: '4px', fontSize: 13,
-    borderRadius: 20, cursor: 'pointer', border: `1px solid ${active ? '#C9A227' : '#4a4d70'}`,
-    background: active ? '#C9A22722' : 'transparent', color: active ? '#C9A227' : '#c0c3d0',
+    borderRadius: 20, cursor: 'pointer', border: `1px solid ${active ? color : '#4a4d70'}`,
+    background: active ? color + '22' : 'transparent', color: active ? color : '#c0c3d0',
     fontFamily: 'inherit', fontWeight: active ? 700 : 400,
   }),
   startBtn: (disabled) => ({
@@ -32,17 +32,34 @@ const SPEEDS = [
 
 export default function HomeScreen({ onStart }) {
   const [categories, setCategories] = useState([]);
+  const [subcategories, setSubcategories] = useState([]);
   const [difficulties, setDifficulties] = useState([...HS_DIFFICULTIES]);
   const [num, setNum] = useState(20);
   const [speed, setSpeed] = useState(240);
 
-  const toggleCategory = (cat) =>
-    setCategories(p => p.includes(cat) ? p.filter(c => c !== cat) : [...p, cat]);
+  const toggleCategory = (cat) => {
+    setCategories(p => {
+      if (p.includes(cat)) {
+        // Deselecting category — also clear its subcategories
+        const catSubs = SUBCATEGORIES[cat] ?? [];
+        setSubcategories(prev => prev.filter(s => !catSubs.includes(s)));
+        return p.filter(c => c !== cat);
+      }
+      return [...p, cat];
+    });
+  };
+
+  const toggleSubcategory = (sub) =>
+    setSubcategories(p => p.includes(sub) ? p.filter(s => s !== sub) : [...p, sub]);
 
   const toggleDifficulty = (d) =>
     setDifficulties(p =>
       p.includes(d) ? p.filter(x => x !== d) : [...p, d].sort((a, b) => a - b)
     );
+
+  // Collect all subcategories from selected categories that have subs
+  const availableSubs = categories.flatMap(cat => SUBCATEGORIES[cat] ?? []);
+  const showSubs = availableSubs.length > 0;
 
   const canStart = difficulties.length > 0;
 
@@ -67,6 +84,28 @@ export default function HomeScreen({ onStart }) {
               </button>
             ))}
           </div>
+
+          {showSubs && (
+            <div style={{ marginTop: 16, paddingTop: 16, borderTop: '1px solid #1e2030' }}>
+              <div style={{ fontSize: 11, color: '#8a8d9e', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 8 }}>
+                Subcategories <span style={{ color: '#4a4d60', textTransform: 'none', letterSpacing: 0 }}>(all if none selected)</span>
+              </div>
+              {categories.map(cat => {
+                const subs = SUBCATEGORIES[cat] ?? [];
+                if (!subs.length) return null;
+                return (
+                  <div key={cat} style={{ marginBottom: 8 }}>
+                    <span style={{ fontSize: 11, color: '#C9A22788', marginRight: 6 }}>{cat}:</span>
+                    {subs.map(sub => (
+                      <button key={sub} style={S.pill(subcategories.includes(sub), '#20B2AA')} onClick={() => toggleSubcategory(sub)}>
+                        {sub}
+                      </button>
+                    ))}
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
 
         <div style={S.card}>
@@ -109,7 +148,7 @@ export default function HomeScreen({ onStart }) {
         <button
           style={S.startBtn(!canStart)}
           disabled={!canStart}
-          onClick={() => onStart({ categories, difficulties, num, speed })}
+          onClick={() => onStart({ categories, subcategories, difficulties, num, speed })}
         >
           Start Practice
         </button>
