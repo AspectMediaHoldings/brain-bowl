@@ -77,8 +77,14 @@ None are set in the cloud build environment, so no paid render ran end to end.
 5. Add [[HeyGen]] for finals once an avatar is trained there.
 6. Clean up the superseded Drive files.
 
+## Project link
+
+This work feeds the [[Legit Launch]] project (`projects/legit-launch/CLAUDE.md`).
+The avatar video pipeline produces the talking-head and short-form content for
+that launch.
+
 ## Graph links
 
-[[Aspect Media Holdings]] | [[Dogs and Coffee]] | [[Reels]] | [[Short-form Video]]
-| [[Long-form Video]] | [[Voice Cloning]] | [[Lipsync]] | [[MCP Server]]
-| [[Model Context Protocol]]
+[[Legit Launch]] | [[Aspect Media Holdings]] | [[Dogs and Coffee]] | [[Reels]]
+| [[Short-form Video]] | [[Long-form Video]] | [[Voice Cloning]] | [[Lipsync]]
+| [[MCP Server]] | [[Model Context Protocol]]
