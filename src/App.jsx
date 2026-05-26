@@ -104,6 +104,7 @@ export default function App() {
   }, [filters]);
 
   const handleRestart = () => { setScreen('home'); setQueue([]); setScore({ ...INIT_SCORE }); setCurrentBonus(null); setError(null); };
+  const handleEndSession = () => setScreen('results');
 
   useEffect(() => {
     if (screen === 'results' && user && queueRef.current.length > 0) {
@@ -215,7 +216,10 @@ export default function App() {
           <div style={S.topBarInner}>
             <span>{sessionTotal} pts</span>
             <span>{score.played} played · {score.powers} pow · {score.negs} neg</span>
-            <button onClick={handleRestart} style={{ background: 'none', border: 'none', color: '#4a4d60', cursor: 'pointer', fontSize: 13, fontFamily: 'inherit' }}>Quit</button>
+            <div style={{ display: 'flex', gap: 12 }}>
+              <button onClick={handleEndSession} style={{ background: 'none', border: '1px solid #4a4d60', borderRadius: 4, color: '#a0a3b0', cursor: 'pointer', fontSize: 12, fontFamily: 'inherit', padding: '3px 10px' }}>End Session</button>
+              <button onClick={handleRestart} style={{ background: 'none', border: 'none', color: '#4a4d60', cursor: 'pointer', fontSize: 13, fontFamily: 'inherit' }}>Menu</button>
+            </div>
           </div>
         </div>
         <TossupPlayer key={qIdx} tossup={queue[qIdx]} onResult={handleTossupResult} questionNum={qIdx + 1} total={queue.length} defaultSpeed={filters?.speed ?? 120} />
@@ -231,6 +235,10 @@ export default function App() {
           <div style={S.topBarInner}>
             <span>{sessionTotal} pts</span>
             <span>{score.played} played · {score.powers} pow · {score.negs} neg</span>
+            <div style={{ display: 'flex', gap: 12 }}>
+              <button onClick={handleEndSession} style={{ background: 'none', border: '1px solid #4a4d60', borderRadius: 4, color: '#a0a3b0', cursor: 'pointer', fontSize: 12, fontFamily: 'inherit', padding: '3px 10px' }}>End Session</button>
+              <button onClick={handleRestart} style={{ background: 'none', border: 'none', color: '#4a4d60', cursor: 'pointer', fontSize: 13, fontFamily: 'inherit' }}>Menu</button>
+            </div>
           </div>
         </div>
         <BonusPlayer bonus={currentBonus} tossupAnswer={lastTossupAnswer} onDone={handleBonusDone} />
