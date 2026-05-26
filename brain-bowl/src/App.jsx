@@ -184,7 +184,7 @@ export default function App() {
         {error && (
           <div style={{ background: '#2e1a1a', border: '1px solid #c0392b', borderRadius: 6, padding: '12px 16px', margin: '16px auto', maxWidth: 800, fontSize: 14, color: '#e74c3c' }}>{error}</div>
         )}
-        <HomeScreen onStart={handleStart} />
+        <HomeScreen onStart={handleStart} onDatabase={() => setScreen('db')} />
       </>
     );
   }

@@ -30,7 +30,7 @@ const SPEEDS = [
   { label: 'Very Fast', ms: 30 },
 ];
 
-export default function HomeScreen({ onStart }) {
+export default function HomeScreen({ onStart, onDatabase }) {
   const [categories, setCategories] = useState([]);
   const [difficulties, setDifficulties] = useState([...HS_DIFFICULTIES]);
   const [num, setNum] = useState(20);
@@ -113,6 +113,15 @@ export default function HomeScreen({ onStart }) {
         >
           Start Practice
         </button>
+
+        {onDatabase && (
+          <button
+            onClick={onDatabase}
+            style={{ display: 'block', width: '100%', padding: '12px', fontSize: 13, fontWeight: 700, background: 'transparent', color: '#a0a3b0', border: '1px solid #2a2d40', borderRadius: 8, cursor: 'pointer', fontFamily: 'inherit', letterSpacing: 2, textTransform: 'uppercase', marginTop: 10 }}
+          >
+            Browse Question Database
+          </button>
+        )}
 
         <p style={{ textAlign: 'center', fontSize: 11, color: '#4a4d60', marginTop: 16 }}>
           Questions sourced live from qbreader.org · NAQT format
