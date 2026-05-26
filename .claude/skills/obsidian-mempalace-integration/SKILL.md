@@ -49,26 +49,29 @@ Before any MCP configuration:
 
 ### MemPalace Installation (Home Machine — Priority)
 
-MemPalace stores persistent memory in a local SQLite database. It is fully offline —
-no network access required after installation.
+MemPalace stores persistent memory in a local SQLite plus ChromaDB store. It runs
+fully offline by default. No network access is required after installation.
 
-1. Install MemPalace via pip:
+1. Install MemPalace (any one of these):
    ```
+   uv tool install mempalace
+   pipx install mempalace
    pip install mempalace
    ```
-2. Confirm installation:
+2. Note the database path MemPalace uses — it defaults to `%USERPROFILE%\.mempalace\`.
+   Do not move this directory after setup.
+3. Register the MCP server with Claude Code (preferred, stdio transport):
    ```
-   python -m mempalace --version
+   claude mcp add mempalace -- python -m mempalace.mcp_server
    ```
-3. Note the database path MemPalace uses — it defaults to `%USERPROFILE%\.mempalace\memory.db`.
-   Do not move this file after setup.
-4. Add MemPalace to claude_desktop_config.json:
+   The MCP entry point is the module `mempalace.mcp_server`, not `mempalace`.
+4. Or add it to claude_desktop_config.json directly:
    ```json
    {
      "mcpServers": {
        "mempalace": {
          "command": "python",
-         "args": ["-m", "mempalace"],
+         "args": ["-m", "mempalace.mcp_server"],
          "env": {}
        }
      }
@@ -76,6 +79,16 @@ no network access required after installation.
    ```
 5. Restart Claude Code.
 6. Verify: start a new Claude Code session and ask Claude to recall something from a previous session. MemPalace is working if it can retrieve stored context.
+
+#### Remote / hosted endpoint (optional)
+
+MemPalace also ships an SSE transport (`--transport sse`), so it can run as a
+networked endpoint instead of a local stdio child process. This is how you let
+other machines, or a cloud Claude Code session, read and write the same palace.
+Run MemPalace in SSE mode on an always-on machine, expose it over a private
+tunnel (Tailscale preferred over a public ngrok URL), require an auth token, then
+register the URL with `claude mcp add --transport sse <name> <url>`. Treat the
+endpoint as sensitive — it exposes the entire memory store.
 
 If MemPalace fails to load: check that Python is in the system PATH (`python --version` works in a fresh terminal). If not, add Python to PATH via Windows environment variables.
 
@@ -142,7 +155,11 @@ Before providing work machine guidance:
 ## References
 
 - Machine: Windows home desktop (primary). Work machine deferred.
-- MemPalace: local SQLite-based persistent memory, fully offline. pip install mempalace.
+- MemPalace: local-first persistent memory (ChromaDB plus SQLite, local Sentence
+  Transformers embeddings). Offline by default. Install via uv, pipx, or pip
+  (`mempalace`). MCP entry point: `python -m mempalace.mcp_server`. Optional SSE
+  transport (`--transport sse`) exposes it as a remote endpoint for cross-machine
+  or cloud access.
 - Obsidian: local vault, no cloud requirement. MCP via obsidian-mcp (npm).
 - Config location: `%USERPROFILE%\.claude\claude_desktop_config.json`
 - NotebookLM: cloud-based, separate tool — not part of this integration. Do not conflate.
