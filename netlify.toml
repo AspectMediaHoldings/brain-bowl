@@ -8,6 +8,11 @@
   status = 200
 
 [[headers]]
+  for = "/assets/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
   for = "/*"
   [headers.values]
     Content-Security-Policy = "default-src 'self'; connect-src 'self' https://www.qbreader.org https://fgocpnptxxghdsblxyzx.supabase.co wss://fgocpnptxxghdsblxyzx.supabase.co; script-src 'self' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://*.googleusercontent.com; font-src 'self'; object-src 'none'; base-uri 'self'; frame-ancestors 'none'"

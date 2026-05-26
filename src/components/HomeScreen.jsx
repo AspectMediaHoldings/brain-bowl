@@ -1,7 +1,13 @@
 import { useState } from 'react';
-import { CATEGORIES, SUBCATEGORIES, DIFFICULTY_LABELS, HS_DIFFICULTIES } from '../utils/qbApi';
+import { CATEGORIES, SUBCATEGORIES, DIFFICULTY_LABELS, HS_DIFFICULTIES, MS_DIFFICULTIES } from '../utils/qbApi';
 
-const SELECTABLE_DIFFICULTIES = [2, 3, 4, 5, 6].filter(d => d in DIFFICULTY_LABELS);
+const SELECTABLE_DIFFICULTIES = [1, 2, 3, 4, 5, 6].filter(d => d in DIFFICULTY_LABELS);
+
+const DIFF_PRESETS = [
+  { label: 'Middle School', val: MS_DIFFICULTIES, color: '#20B2AA' },
+  { label: 'High School', val: HS_DIFFICULTIES, color: '#C9A227' },
+  { label: 'All', val: [1, 2, 3, 4, 5, 6], color: '#6b7084' },
+];
 
 const S = {
   app: { minHeight: '100vh', background: '#0a0b0f', color: '#e8e6e1', fontFamily: "'Palatino Linotype','Book Antiqua',serif", padding: 0 },
@@ -110,9 +116,17 @@ export default function HomeScreen({ onStart }) {
 
         <div style={S.card}>
           <h2 style={S.h2}>Difficulty</h2>
+          <div style={{ marginBottom: 10, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            {DIFF_PRESETS.map(p => (
+              <button key={p.label} onClick={() => setDifficulties(p.val)}
+                style={{ padding: '4px 14px', fontSize: 11, fontWeight: 700, border: `1px solid ${p.color}`, borderRadius: 4, background: 'transparent', color: p.color, cursor: 'pointer', fontFamily: 'inherit', letterSpacing: 1 }}>
+                {p.label}
+              </button>
+            ))}
+          </div>
           <div>
             {SELECTABLE_DIFFICULTIES.map(d => (
-              <button key={d} style={S.pill(difficulties.includes(d))} onClick={() => toggleDifficulty(d)}>
+              <button key={d} style={S.pill(difficulties.includes(d), d <= 2 ? '#20B2AA' : '#C9A227')} onClick={() => toggleDifficulty(d)}>
                 {DIFFICULTY_LABELS[d]}
               </button>
             ))}
@@ -156,6 +170,17 @@ export default function HomeScreen({ onStart }) {
         <p style={{ textAlign: 'center', fontSize: 11, color: '#8a8d9e', marginTop: 16 }}>
           Questions sourced live from qbreader.org · NAQT format
         </p>
+
+        <div style={{ textAlign: 'center', marginTop: 24, paddingTop: 20, borderTop: '1px solid #1e2030' }}>
+          <p style={{ fontSize: 12, color: '#6b7084', marginBottom: 12 }}>Buy me a coffee to help support this page</p>
+          <a href="https://www.buymeacoffee.com/brainbowlpractice" target="_blank" rel="noopener noreferrer">
+            <img
+              src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png"
+              alt="Buy Me a Coffee"
+              style={{ height: 60, width: 217 }}
+            />
+          </a>
+        </div>
       </div>
     </div>
   );
