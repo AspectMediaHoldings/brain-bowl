@@ -23,10 +23,18 @@ const S = {
   }),
 };
 
+const SPEEDS = [
+  { label: 'Slow', ms: 200 },
+  { label: 'Normal', ms: 120 },
+  { label: 'Fast', ms: 70 },
+  { label: 'Very Fast', ms: 30 },
+];
+
 export default function HomeScreen({ onStart }) {
   const [categories, setCategories] = useState([]);
   const [difficulties, setDifficulties] = useState([...HS_DIFFICULTIES]);
   const [num, setNum] = useState(20);
+  const [speed, setSpeed] = useState(120);
 
   const toggleCategory = (cat) =>
     setCategories(p => p.includes(cat) ? p.filter(c => c !== cat) : [...p, cat]);
@@ -76,6 +84,17 @@ export default function HomeScreen({ onStart }) {
         </div>
 
         <div style={S.card}>
+          <h2 style={S.h2}>Reading speed</h2>
+          <div>
+            {SPEEDS.map(s => (
+              <button key={s.ms} style={S.pill(speed === s.ms)} onClick={() => setSpeed(s.ms)}>
+                {s.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div style={S.card}>
           <h2 style={S.h2}>Questions per session: <span style={{ color: '#e8e6e1' }}>{num}</span></h2>
           <input
             type="range" min={5} max={40} step={5} value={num}
@@ -90,7 +109,7 @@ export default function HomeScreen({ onStart }) {
         <button
           style={S.startBtn(!canStart)}
           disabled={!canStart}
-          onClick={() => onStart({ categories, difficulties, num })}
+          onClick={() => onStart({ categories, difficulties, num, speed })}
         >
           Start Practice
         </button>

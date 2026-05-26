@@ -33,7 +33,7 @@ const S = {
   }),
 };
 
-export default function TossupPlayer({ tossup, onResult, questionNum, total }) {
+export default function TossupPlayer({ tossup, onResult, questionNum, total, defaultSpeed = 120 }) {
   const words = useMemo(() => parseWords(tossup.question_sanitized ?? tossup.question ?? ''), [tossup.question_sanitized, tossup.question]);
   const powerIdx = useMemo(() => findPowerIdx(words), [words]);
 
@@ -42,7 +42,7 @@ export default function TossupPlayer({ tossup, onResult, questionNum, total }) {
   const [answer, setAnswer] = useState('');
   const [judgment, setJudgment] = useState(null);
   const [paused, setPaused] = useState(false);
-  const [speed, setSpeed] = useState(120);
+  const [speed, setSpeed] = useState(defaultSpeed);
 
   const timerRef = useRef(null);
   const inputRef = useRef(null);
