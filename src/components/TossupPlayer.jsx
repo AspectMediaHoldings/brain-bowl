@@ -34,7 +34,7 @@ const S = {
 };
 
 export default function TossupPlayer({ tossup, onResult, questionNum, total }) {
-  const words = useMemo(() => parseWords(tossup.question ?? ''), [tossup.question]);
+  const words = useMemo(() => parseWords(tossup.question_sanitized ?? tossup.question ?? ''), [tossup.question_sanitized, tossup.question]);
   const powerIdx = useMemo(() => findPowerIdx(words), [words]);
 
   const [revealed, setRevealed] = useState(0);

@@ -48,8 +48,15 @@ export default function AuthGate({ onGuest }) {
     }
   };
 
-  const handleGoogle = () =>
-    supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: window.location.origin } });
+  const handleGoogle = async () => {
+    setError('');
+    const { data, error: e } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: { redirectTo: window.location.origin },
+    });
+    if (e) setError(e.message);
+    else if (data?.url) window.location.href = data.url;
+  };
 
   return (
     <div style={S.wrap}>

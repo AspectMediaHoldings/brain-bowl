@@ -52,7 +52,7 @@ export async function fetchTossups({
   const data = await apiFetch('random-tossup', {
     difficulties: difficulties.join(','),
     categories: categories.length ? categories.join(',') : undefined,
-    num,
+    number: num,
   });
   return (data.tossups ?? []).filter(isValidTossup);
 }
@@ -64,7 +64,7 @@ export async function fetchRandomBonus({
   const data = await apiFetch('random-bonus', {
     difficulties: difficulties.join(','),
     categories: categories.length ? categories.join(',') : undefined,
-    num: 1,
+    number: 1,
   });
   const bonus = data.bonuses?.[0] ?? null;
   return isValidBonus(bonus) ? bonus : null;

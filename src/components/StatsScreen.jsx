@@ -9,44 +9,28 @@ const S = {
   btn: (c = '#6b7084') => ({ padding: '10px 20px', fontSize: 13, fontWeight: 700, border: `1px solid ${c}`, borderRadius: 6, background: 'transparent', color: c, cursor: 'pointer', fontFamily: 'inherit', letterSpacing: 1 }),
 };
 
-function CategoryBar({ label, correct, total }) {
-  const pct = total > 0 ? Math.round((correct / total) * 100) : 0;
-  const barColor = pct >= 60 ? '#27ae60' : pct >= 40 ? '#f39c12' : '#c0392b';
-  return (
-    <div style={{ marginBottom: 12 }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, marginBottom: 4 }}>
-        <span style={{ color: '#b0aead' }}>{label}</span>
-        <span style={{ color: barColor, fontWeight: 700 }}>{pct}% ({correct}/{total})</span>
-      </div>
-      <div style={{ height: 4, background: '#1e2030', borderRadius: 2 }}>
-        <div style={{ height: 4, borderRadius: 2, width: `${pct}%`, background: barColor, transition: 'width 0.4s ease' }} />
-      </div>
-    </div>
-  );
-}
 
 export default function StatsScreen({ user, onBack }) {
   const [sessions, setSessions] = useState([]);
-  const [categoryStats, setCategoryStats] = useState({});
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (!user) return;
-    Promise.all([
-      supabase.from('sessions').select('*').eq('user_id', user.id).order('completed_at', { ascending: false }).limit(10),
-      supabase.from('question_results').select('category, correct, pts, power').eq('user_id', user.id),
-    ]).then(([{ data: s }, { data: r }]) => {
-      setSessions(s ?? []);
-      const cats = {};
-      (r ?? []).forEach(row => {
-        if (!row.category) return;
-        if (!cats[row.category]) cats[row.category] = { correct: 0, total: 0 };
-        cats[row.category].total++;
-        if (row.correct) cats[row.category].correct++;
-      });
-      setCategoryStats(cats);
-      setLoading(false);
-    });
+    async function load() {
+      try {
+        const { data: s } = await supabase
+          .from('sessions')
+          .select('*')
+          .eq('user_id', user.id)
+          .order('completed_at', { ascending: false })
+          .limit(10);
+        setSessions(s ?? []);
+      } catch {
+      } finally {
+        setLoading(false);
+      }
+    }
+    load();
   }, [user]);
 
   const totalPlayed = sessions.reduce((a, s) => a + (s.played || 0), 0);
@@ -89,17 +73,6 @@ export default function StatsScreen({ user, onBack }) {
                 ))}
               </div>
             </div>
-
-            {Object.keys(categoryStats).length > 0 && (
-              <div style={S.card}>
-                <div style={S.h2}>Accuracy by category</div>
-                {Object.entries(categoryStats)
-                  .sort((a, b) => b[1].total - a[1].total)
-                  .map(([cat, { correct, total }]) => (
-                    <CategoryBar key={cat} label={cat} correct={correct} total={total} />
-                  ))}
-              </div>
-            )}
 
             <div style={S.card}>
               <div style={S.h2}>Recent sessions</div>

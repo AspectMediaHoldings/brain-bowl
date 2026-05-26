@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import HomeScreen from './components/HomeScreen';
 import TossupPlayer from './components/TossupPlayer';
 import BonusPlayer from './components/BonusPlayer';
@@ -41,6 +41,10 @@ export default function App() {
 
   const queueRef = useRef(queue);
   queueRef.current = queue;
+  const scoreRef = useRef(score);
+  scoreRef.current = score;
+  const filtersRef = useRef(filters);
+  filtersRef.current = filters;
 
   const handleStart = useCallback(async (opts) => {
     setFilters(opts);
@@ -88,16 +92,21 @@ export default function App() {
     setQIdx(prev => {
       const next = prev + 1;
       if (next >= queueRef.current.length) {
-        setScore(s => { saveSession(s, filters); return s; });
         setScreen('results');
         return prev;
       }
       setScreen('tossup');
       return next;
     });
-  }, [filters, saveSession]);
+  }, [filters]);
 
   const handleRestart = () => { setScreen('home'); setQueue([]); setScore({ ...INIT_SCORE }); setCurrentBonus(null); setError(null); };
+
+  useEffect(() => {
+    if (screen === 'results' && user && queueRef.current.length > 0) {
+      saveSession(scoreRef.current, filtersRef.current);
+    }
+  }, [screen]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const sessionTotal = score.pts + score.bonusPts;
 
@@ -171,7 +180,7 @@ export default function App() {
             <button onClick={handleRestart} style={{ background: 'none', border: 'none', color: '#4a4d60', cursor: 'pointer', fontSize: 13, fontFamily: 'inherit' }}>Quit</button>
           </div>
         </div>
-        <TossupPlayer tossup={queue[qIdx]} onResult={handleTossupResult} questionNum={qIdx + 1} total={queue.length} />
+        <TossupPlayer key={qIdx} tossup={queue[qIdx]} onResult={handleTossupResult} questionNum={qIdx + 1} total={queue.length} />
       </div>
     );
   }
