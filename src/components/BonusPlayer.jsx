@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { checkAnswer } from '../utils/qbApi';
+import { logBonusPartEvent } from '../utils/sessionEvents';
 
 const S = {
   wrap: { minHeight: '100vh', background: '#0a0b0f', color: '#e8e6e1', fontFamily: "'Palatino Linotype','Book Antiqua',serif" },
@@ -29,7 +30,7 @@ function getParts(bonus) {
 
 const BONUS_ADVANCE_DELAY_MS = 1600;
 
-export default function BonusPlayer({ bonus, tossupAnswer, onDone }) {
+export default function BonusPlayer({ bonus, tossupAnswer, onDone, sessionId, userId }) {
   const parts = getParts(bonus);
   const [partIdx, setPartIdx] = useState(0);
   const [answer, setAnswer] = useState('');
@@ -67,6 +68,7 @@ export default function BonusPlayer({ bonus, tossupAnswer, onDone }) {
       const part = parts[partIdx];
       const j = await checkAnswer(part.answer, answer.trim());
       const correct = j.directive === 'accept';
+      logBonusPartEvent({ sessionId, userId, bonus, partIdx, correct, pts: correct ? 10 : 0 });
       const newResults = [...results, { correct, answer: part.answer, given: answer.trim() }];
       setResults(newResults);
       setShowAnswer(true);
@@ -82,6 +84,7 @@ export default function BonusPlayer({ bonus, tossupAnswer, onDone }) {
 
   const handleSkip = useCallback(() => {
     const part = parts[partIdx];
+    logBonusPartEvent({ sessionId, userId, bonus, partIdx, correct: false, pts: 0 });
     const newResults = [...results, { correct: false, answer: part.answer, given: '' }];
     setResults(newResults);
     setShowAnswer(true);

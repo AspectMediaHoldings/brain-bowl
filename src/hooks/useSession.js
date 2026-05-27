@@ -2,9 +2,10 @@ import { useCallback } from 'react';
 import { supabase } from '../lib/supabase';
 
 export function useSession(user) {
-  const saveSession = useCallback(async (score, filters) => {
+  const saveSession = useCallback(async (sessionId, score, filters) => {
     if (!user) return;
     await supabase.from('sessions').insert({
+      id: sessionId,
       user_id: user.id,
       pts: score.pts,
       bonus_pts: score.bonusPts,

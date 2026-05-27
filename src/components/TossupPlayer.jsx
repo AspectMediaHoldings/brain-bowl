@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { checkAnswer } from '../utils/qbApi';
+import { logTossupEvent } from '../utils/sessionEvents';
 
 function parseWords(question) {
   return question.split(/\s+/).filter(Boolean);
@@ -33,7 +34,7 @@ const S = {
   }),
 };
 
-export default function TossupPlayer({ tossup, onResult, questionNum, total, defaultSpeed = 120, onSaveFlashcard, onFlagQuestion }) {
+export default function TossupPlayer({ tossup, onResult, questionNum, total, defaultSpeed = 120, onSaveFlashcard, onFlagQuestion, sessionId, userId }) {
   const words = useMemo(() => parseWords(tossup.question_sanitized ?? tossup.question ?? ''), [tossup.question_sanitized, tossup.question]);
   const powerIdx = useMemo(() => findPowerIdx(words), [words]);
 
@@ -89,9 +90,11 @@ export default function TossupPlayer({ tossup, onResult, questionNum, total, def
     setPhase('judged');
     if (j.directive === 'accept') {
       setRevealed(words.length);
+      logTossupEvent({ sessionId, userId, tossup, buzzWordIndex: revealed, isPower: isPowered, correct: true, pts: isPowered ? 15 : 10 });
       onResult({ pts: isPowered ? 15 : 10, correct: true, power: isPowered, tossup });
     } else if (j.directive === 'reject') {
       setRevealed(words.length);
+      logTossupEvent({ sessionId, userId, tossup, buzzWordIndex: revealed, isPower: false, correct: false, pts: -5 });
       onResult({ pts: -5, correct: false, power: false, tossup });
     }
   };
@@ -207,6 +210,7 @@ export default function TossupPlayer({ tossup, onResult, questionNum, total, def
             <button style={S.btn('#6b7084', true)} onClick={() => {
               clearInterval(timerRef.current);
               setRevealed(words.length);
+              logTossupEvent({ sessionId, userId, tossup, buzzWordIndex: revealed, isPower: false, correct: false, pts: 0 });
               onResult({ pts: 0, correct: false, power: false, tossup, skipped: true });
             }}>Skip</button>
           </div>
