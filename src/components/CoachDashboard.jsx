@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { ALL_CATEGORIES, DIFFICULTY_LABELS, MS_DIFFICULTIES, HS_DIFFICULTIES } from '../utils/qbApi';
+import { Filter } from 'bad-words';
 
 const DIFF_PRESETS = [
   { label: 'MS', val: MS_DIFFICULTIES, color: '#20B2AA' },
@@ -567,6 +568,303 @@ function NotesTab({ user }) {
   );
 }
 
+function SubjectLeaderboardTab({ user }) {
+  const [students, setStudents] = useState([]);
+  const [rows, setRows] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [sqlError, setSqlError] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState('');
+
+  useEffect(() => { load(); }, [user]);
+
+  async function load() {
+    setLoading(true);
+    try {
+      const { data: activeRows } = await supabase
+        .from('coach_students').select('student_id').eq('coach_id', user.id).eq('status', 'active');
+
+      const studentIds = (activeRows ?? []).map(r => r.student_id);
+      if (!studentIds.length) { setStudents([]); setRows([]); setLoading(false); return; }
+
+      const [{ data: profiles }, { data: events, error: evErr }] = await Promise.all([
+        supabase.from('profiles').select('id, display_name').in('id', studentIds),
+        supabase.from('session_events').select('user_id, category, correct, pts').in('user_id', studentIds),
+      ]);
+
+      if (evErr?.code === '42P01') { setSqlError(true); setLoading(false); return; }
+
+      const profileMap = Object.fromEntries((profiles ?? []).map(p => [p.id, p.display_name ?? '(unnamed)']));
+
+      const byStudent = {};
+      for (const e of events ?? []) {
+        if (!byStudent[e.user_id]) byStudent[e.user_id] = {};
+        if (!byStudent[e.user_id][e.category]) byStudent[e.user_id][e.category] = { correct: 0, total: 0, pts: 0 };
+        byStudent[e.user_id][e.category].total++;
+        if (e.correct) byStudent[e.user_id][e.category].correct++;
+        byStudent[e.user_id][e.category].pts += e.pts ?? 0;
+      }
+
+      setStudents(studentIds.map(id => ({ id, name: profileMap[id] ?? '(unnamed)' })));
+      setRows(byStudent);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  if (sqlError) {
+    return (
+      <div style={S.card}>
+        <div style={S.h2}>Subject Leaderboard</div>
+        <div style={S.err}>The <code>session_events</code> table does not exist yet. Run the SQL migration from the Admin Panel.</div>
+      </div>
+    );
+  }
+
+  const categories = selectedCategory ? [selectedCategory] : ALL_CATEGORIES;
+
+  return (
+    <>
+      <div style={S.card}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+          <div style={S.h2}>Subject Leaderboard</div>
+          <select
+            style={{ ...S.sel, fontSize: 12, padding: '5px 10px' }}
+            value={selectedCategory}
+            onChange={e => setSelectedCategory(e.target.value)}
+          >
+            <option value="">All Categories</option>
+            {ALL_CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+          </select>
+        </div>
+
+        {loading ? (
+          <div style={{ color: '#4a4d60', fontSize: 13 }}>Loading...</div>
+        ) : students.length === 0 ? (
+          <p style={{ color: '#6b7084', fontSize: 13, margin: 0 }}>No active students on your roster.</p>
+        ) : (
+          categories.map(cat => {
+            const ranked = students
+              .map(s => {
+                const stats = rows[s.id]?.[cat] ?? { correct: 0, total: 0, pts: 0 };
+                return { ...s, ...stats, pct: stats.total ? Math.round(stats.correct / stats.total * 100) : null };
+              })
+              .filter(s => s.total > 0)
+              .sort((a, b) => b.pts - a.pts);
+
+            if (ranked.length === 0 && selectedCategory) {
+              return (
+                <div key={cat} style={{ color: '#4a4d60', fontSize: 13, padding: '8px 0' }}>
+                  No data yet for {cat}.
+                </div>
+              );
+            }
+            if (ranked.length === 0) return null;
+
+            return (
+              <div key={cat} style={{ marginBottom: 24 }}>
+                <div style={{ fontSize: 12, color: '#C9A227', fontWeight: 700, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8, borderBottom: '1px solid #1e2030', paddingBottom: 6 }}>
+                  {cat}
+                </div>
+                {ranked.map((s, i) => (
+                  <div key={s.id} style={{ display: 'grid', gridTemplateColumns: '28px 2fr 60px 70px 60px', gap: 0, alignItems: 'center', padding: '8px 0', borderBottom: '1px solid #1e2030', fontSize: 13 }}>
+                    <span style={{ color: i === 0 ? '#C9A227' : '#4a4d60', fontWeight: 700 }}>#{i + 1}</span>
+                    <span style={{ fontWeight: 600 }}>{s.name}</span>
+                    <span style={{ color: '#C9A227', fontWeight: 700 }}>{s.pts} pts</span>
+                    <span style={{ color: '#6b7084' }}>{s.correct}/{s.total}</span>
+                    <span style={{
+                      fontSize: 11, padding: '2px 6px', borderRadius: 3, fontWeight: 700, textAlign: 'center',
+                      background: s.pct >= 70 ? '#1a2e1a' : s.pct >= 50 ? '#2e2a1a' : '#2e1a1a',
+                      color: s.pct >= 70 ? '#27ae60' : s.pct >= 50 ? '#C9A227' : '#c0392b',
+                    }}>{s.pct}%</span>
+                  </div>
+                ))}
+              </div>
+            );
+          })
+        )}
+      </div>
+    </>
+  );
+}
+
+function TeamsTab({ user }) {
+  const [teams, setTeams] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [sqlError, setSqlError] = useState(false);
+  const [msg, setMsg] = useState(null);
+  const [createName, setCreateName] = useState('');
+  const [creating, setCreating] = useState(false);
+  const [inviteEmail, setInviteEmail] = useState({});
+  const [inviting, setInviting] = useState(null);
+
+  useEffect(() => { load(); }, [user]);
+
+  async function load() {
+    setLoading(true);
+    try {
+      const { data: coachMemberships, error: cmErr } = await supabase
+        .from('team_members')
+        .select('team_id')
+        .eq('user_id', user.id)
+        .eq('role', 'coach')
+        .eq('status', 'active');
+
+      if (cmErr?.code === '42P01') { setSqlError(true); setLoading(false); return; }
+
+      const teamIds = (coachMemberships ?? []).map(m => m.team_id);
+      if (!teamIds.length) { setTeams([]); setLoading(false); return; }
+
+      const [{ data: teamRows }, { data: memberRows }] = await Promise.all([
+        supabase.from('teams').select('*').in('id', teamIds),
+        supabase.from('team_members').select('id, team_id, user_id, email, role, status').in('team_id', teamIds),
+      ]);
+
+      const userIds = (memberRows ?? []).filter(m => m.user_id).map(m => m.user_id);
+      let profileMap = {};
+      if (userIds.length) {
+        const { data: profiles } = await supabase.from('profiles').select('id, display_name').in('id', userIds);
+        profileMap = Object.fromEntries((profiles ?? []).map(p => [p.id, p.display_name]));
+      }
+
+      setTeams((teamRows ?? []).map(t => ({
+        ...t,
+        members: (memberRows ?? [])
+          .filter(m => m.team_id === t.id)
+          .map(m => ({ ...m, displayName: m.user_id ? (profileMap[m.user_id] ?? '(unnamed)') : (m.email ?? '(unknown)') })),
+      })));
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function createTeam() {
+    const name = createName.trim();
+    if (!name) { setMsg({ type: 'err', text: 'Team name required.' }); return; }
+    const filter = new Filter();
+    if (filter.isProfane(name)) { setMsg({ type: 'err', text: 'Team name contains prohibited words.' }); return; }
+    setCreating(true);
+    setMsg(null);
+    const joinCode = Math.random().toString(36).slice(2, 8).toUpperCase();
+    const { data: team, error: teamErr } = await supabase
+      .from('teams').insert({ name, coach_id: user.id, join_code: joinCode }).select().single();
+    if (teamErr) { setMsg({ type: 'err', text: teamErr.message }); setCreating(false); return; }
+    await supabase.from('team_members').insert({ team_id: team.id, user_id: user.id, role: 'coach', status: 'active' });
+    setCreateName('');
+    setCreating(false);
+    setMsg({ type: 'ok', text: `Team "${name}" created. Join code: ${joinCode}` });
+    load();
+  }
+
+  async function inviteToTeam(teamId) {
+    const email = (inviteEmail[teamId] ?? '').trim().toLowerCase();
+    if (!email || !email.includes('@')) { setMsg({ type: 'err', text: 'Valid email required.' }); return; }
+    setInviting(teamId);
+    setMsg(null);
+    const { error } = await supabase.from('team_members').insert({ team_id: teamId, email, role: 'student', status: 'invited' });
+    setInviting(null);
+    if (error) {
+      setMsg({ type: 'err', text: error.code === '23505' ? 'That email is already in this team.' : error.message });
+      return;
+    }
+    setInviteEmail(ie => ({ ...ie, [teamId]: '' }));
+    setMsg({ type: 'ok', text: `Invited ${email}.` });
+    load();
+  }
+
+  async function removeMember(memberId) {
+    await supabase.from('team_members').delete().eq('id', memberId);
+    load();
+  }
+
+  if (sqlError) {
+    return (
+      <div style={S.card}>
+        <div style={S.h2}>Teams</div>
+        <div style={S.err}>The <code>teams</code> table does not exist yet. Run the SQL migration from the Admin Panel.</div>
+      </div>
+    );
+  }
+
+  return (
+    <>
+      {msg && <div style={msg.type === 'err' ? S.err : S.ok}>{msg.text}</div>}
+
+      <div style={S.card}>
+        <div style={S.h2}>Create Team</div>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <input
+            style={{ ...S.inp, flex: 1, width: 'auto' }}
+            placeholder="Team name..."
+            value={createName}
+            onChange={e => setCreateName(e.target.value)}
+            onKeyDown={e => e.key === 'Enter' && createTeam()}
+          />
+          <button style={S.btn()} onClick={createTeam} disabled={creating}>
+            {creating ? 'Creating...' : 'Create'}
+          </button>
+        </div>
+      </div>
+
+      {loading ? (
+        <div style={{ textAlign: 'center', color: '#4a4d60', padding: 40 }}>Loading...</div>
+      ) : teams.length === 0 ? (
+        <div style={S.card}>
+          <p style={{ color: '#6b7084', margin: 0, fontSize: 13 }}>No teams yet. Create one above.</p>
+        </div>
+      ) : (
+        teams.map(team => (
+          <div key={team.id} style={S.card}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+              <div>
+                <div style={{ fontSize: 16, fontWeight: 700, color: '#e8e6e1' }}>{team.name}</div>
+                <div style={{ fontSize: 12, color: '#4a4d60', marginTop: 4 }}>
+                  Join code: <span style={{ fontFamily: 'monospace', color: '#C9A227', fontWeight: 700, letterSpacing: 2 }}>{team.join_code}</span>
+                </div>
+              </div>
+              <div style={{ fontSize: 12, color: '#6b7084' }}>{team.members.filter(m => m.role === 'student').length} students</div>
+            </div>
+
+            <div style={{ marginBottom: 12 }}>
+              <div style={{ fontSize: 11, color: '#6b7084', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 8 }}>Members</div>
+              {team.members.filter(m => m.role !== 'coach').length === 0 ? (
+                <p style={{ color: '#4a4d60', fontSize: 13, margin: 0 }}>No students yet.</p>
+              ) : (
+                team.members.filter(m => m.role !== 'coach').map(m => (
+                  <div key={m.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 0', borderBottom: '1px solid #1e2030', fontSize: 13 }}>
+                    <span>
+                      {m.displayName}
+                      <span style={{
+                        marginLeft: 8, fontSize: 10, padding: '1px 5px', borderRadius: 3, fontWeight: 700,
+                        background: m.status === 'active' ? '#1a2e1a' : m.status === 'pending' ? '#2e2a1a' : '#2a2d40',
+                        color: m.status === 'active' ? '#27ae60' : m.status === 'pending' ? '#C9A227' : '#6b7084',
+                      }}>{m.status.toUpperCase()}</span>
+                    </span>
+                    <button style={S.btn('#c0392b', true)} onClick={() => removeMember(m.id)}>Remove</button>
+                  </div>
+                ))
+              )}
+            </div>
+
+            <div style={{ display: 'flex', gap: 8 }}>
+              <input
+                style={{ ...S.inp, flex: 1, width: 'auto', fontSize: 12, padding: '7px 10px' }}
+                type="email"
+                placeholder="Invite by email..."
+                value={inviteEmail[team.id] ?? ''}
+                onChange={e => setInviteEmail(ie => ({ ...ie, [team.id]: e.target.value }))}
+                onKeyDown={e => e.key === 'Enter' && inviteToTeam(team.id)}
+              />
+              <button style={{ ...S.btn('#20B2AA'), fontSize: 12, padding: '7px 14px' }} onClick={() => inviteToTeam(team.id)} disabled={inviting === team.id}>
+                {inviting === team.id ? 'Inviting...' : 'Invite'}
+              </button>
+            </div>
+          </div>
+        ))
+      )}
+    </>
+  );
+}
+
 export default function CoachDashboard({ user, onBack }) {
   const [tab, setTab] = useState('roster');
 
@@ -579,7 +877,7 @@ export default function CoachDashboard({ user, onBack }) {
         </div>
 
         <div style={S.tabBar}>
-          {[['roster', 'My Roster'], ['assignments', 'Assignments'], ['notes', 'Notes']].map(([key, label]) => (
+          {[['roster', 'My Roster'], ['assignments', 'Assignments'], ['notes', 'Notes'], ['teams', 'Teams'], ['leaderboard', 'By Subject']].map(([key, label]) => (
             <button key={key} style={S.tabBtn(tab === key)} onClick={() => setTab(key)}>{label}</button>
           ))}
         </div>
@@ -587,6 +885,8 @@ export default function CoachDashboard({ user, onBack }) {
         {tab === 'roster' && <RosterTab user={user} />}
         {tab === 'assignments' && <AssignmentsTab user={user} />}
         {tab === 'notes' && <NotesTab user={user} />}
+        {tab === 'teams' && <TeamsTab user={user} />}
+        {tab === 'leaderboard' && <SubjectLeaderboardTab user={user} />}
       </div>
     </div>
   );
