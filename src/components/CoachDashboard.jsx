@@ -315,6 +315,17 @@ function AssignmentsTab({ user }) {
     if (error) { setMsg({ type: 'err', text: error.message }); return; }
     setFormTitle(''); setFormCats([]); setFormDiffs([...HS_DIFFICULTIES]); setFormNum(20); setFormDue(''); setFormStudent('');
     setMsg({ type: 'ok', text: 'Assignment created.' });
+    // Fire-and-forget email notification — fails silently if not configured
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        fetch('/.netlify/functions/notify-assignment', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + session.access_token },
+          body: JSON.stringify({ studentId: formStudent, title: formTitle.trim(), numQuestions: formNum, dueDate: formDue || null }),
+        }).catch(() => {});
+      }
+    } catch { /* email is best-effort */ }
     load();
   }
 
