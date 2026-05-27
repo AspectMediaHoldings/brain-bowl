@@ -6,6 +6,7 @@ export const CATEGORIES = [
   'Social Science', 'Current Events', 'Other Academic',
 ];
 
+export const MS_DIFFICULTIES = [1, 2];
 // NAQT IS HS difficulty range: 3=Regular HS, 4=Hard HS, 5=National HS
 export const HS_DIFFICULTIES = [3, 4, 5];
 
