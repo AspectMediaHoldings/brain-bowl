@@ -171,7 +171,7 @@ export default function LandingPage({ onSignIn, onGuest }) {
           borderRadius: 20, fontSize: 11, color: TEAL,
           letterSpacing: 2, textTransform: 'uppercase', fontWeight: 700, marginBottom: 28,
         }}>
-          Free for Students · Powered by NAQT
+          Free · Florida MS &amp; HS Brain Bowl · Powered by qbreader
         </div>
 
         <h1 style={{
@@ -193,8 +193,8 @@ export default function LandingPage({ onSignIn, onGuest }) {
           fontSize: 'clamp(16px, 2.5vw, 20px)', color: MUTED,
           margin: '20px auto 40px', lineHeight: 1.55, maxWidth: 540, position: 'relative',
         }}>
-          Free pyramidal tossup and bonus questions for middle school
-          and high school teams. Powered by live NAQT packet data.
+          Free pyramidal tossup and bonus practice for Florida middle school
+          and high school brain bowl teams. No app, no subscription, no catch.
         </p>
 
         <div className="bb-hero-btns" style={{
@@ -210,18 +210,18 @@ export default function LandingPage({ onSignIn, onGuest }) {
               boxShadow: `0 0 36px ${GOLD}44`,
             }}
           >
-            Start Practicing Free
+            I'm a Student — Practice Now
           </button>
           <button
             onClick={onSignIn}
             style={{
               padding: '15px 36px', fontSize: 14, fontWeight: 700,
-              background: 'transparent', border: `1px solid ${DIM}`,
-              borderRadius: 8, color: MUTED, cursor: 'pointer',
+              background: 'transparent', border: `1px solid ${TEAL}`,
+              borderRadius: 8, color: TEAL, cursor: 'pointer',
               fontFamily: FONT, letterSpacing: 1.5, textTransform: 'uppercase',
             }}
           >
-            Sign In
+            I'm a Coach — Sign In
           </button>
         </div>
 
@@ -331,6 +331,52 @@ export default function LandingPage({ onSignIn, onGuest }) {
         </div>
       </section>
 
+      {/* ── Coach Outreach Banner ────────────────────────── */}
+      <section style={{ maxWidth: 1100, margin: '0 auto', padding: '0 28px 56px' }}>
+        <div style={{
+          background: `linear-gradient(135deg, ${SURFACE} 0%, #0f1520 100%)`,
+          border: `1px solid ${GOLD}44`,
+          borderRadius: 10, padding: '28px 36px',
+          display: 'flex', flexWrap: 'wrap', gap: 20,
+          alignItems: 'center', justifyContent: 'space-between',
+        }}>
+          <div>
+            <div style={{ fontSize: 13, fontWeight: 700, color: TEXT, marginBottom: 6 }}>
+              Coach at a Florida brain bowl school?
+            </div>
+            <div style={{ fontSize: 12, color: MUTED, lineHeight: 1.6, maxWidth: 480 }}>
+              Apply for a free coach account. You'll get a roster dashboard, practice assignments,
+              and per-subject performance data for every student on your team.
+            </div>
+          </div>
+          <div style={{ display: 'flex', gap: 12, alignItems: 'center', flexShrink: 0 }}>
+            <button
+              onClick={onSignIn}
+              style={{
+                padding: '11px 24px', fontSize: 12, fontWeight: 700,
+                background: GOLD, border: 'none', borderRadius: 7,
+                color: BG, cursor: 'pointer', fontFamily: FONT,
+                letterSpacing: 1, textTransform: 'uppercase', whiteSpace: 'nowrap',
+              }}
+            >
+              Apply as Coach
+            </button>
+            <a
+              href="mailto:nspells@gmail.com?subject=Brain Bowl Practice — Coach Account Request"
+              style={{
+                padding: '11px 20px', fontSize: 12, fontWeight: 700,
+                background: 'transparent', border: `1px solid ${DIM}`,
+                borderRadius: 7, color: MUTED, cursor: 'pointer',
+                fontFamily: FONT, letterSpacing: 1, textTransform: 'uppercase',
+                textDecoration: 'none', whiteSpace: 'nowrap',
+              }}
+            >
+              Email Us
+            </a>
+          </div>
+        </div>
+      </section>
+
       {/* ── How It Works ─────────────────────────────────── */}
       <section style={{
         background: SURFACE, borderTop: `1px solid ${BORDER}`, borderBottom: `1px solid ${BORDER}`,
@@ -395,23 +441,28 @@ export default function LandingPage({ onSignIn, onGuest }) {
       </section>
 
       {/* ── Footer ───────────────────────────────────────── */}
-      <footer style={{ borderTop: `1px solid ${BORDER}`, padding: '24px 28px', textAlign: 'center' }}>
+      <footer style={{ borderTop: `1px solid ${BORDER}`, padding: '32px 28px', textAlign: 'center' }}>
         <p style={{ fontSize: 12, color: DIM, margin: 0, letterSpacing: 1 }}>
-          Brain Bowl Practice — Free forever for students.
+          Brain Bowl Practice — Free forever for Florida students and coaches.
         </p>
         <p style={{ fontSize: 11, color: '#2a2d40', margin: '6px 0 0' }}>
-          Questions sourced from qbreader.org · NAQT format
+          Questions sourced from{' '}
+          <a href="https://www.qbreader.org" target="_blank" rel="noopener noreferrer" style={{ color: DIM, textDecoration: 'none' }}>qbreader.org</a>
+          {' '}· NAQT format · MS and HS difficulty
         </p>
-        <p style={{ margin: '10px 0 0' }}>
+        <p style={{ fontSize: 11, color: '#2a2d40', margin: '8px 0 0' }}>
+          Questions or feedback:{' '}
+          <a href="mailto:nspells@gmail.com" style={{ color: MUTED, textDecoration: 'none' }}>nspells@gmail.com</a>
+          {' '}·{' '}
           <button
             onClick={() => setShowAbout(true)}
             style={{
-              background: 'none', border: 'none', color: DIM,
-              cursor: 'pointer', fontSize: 11, letterSpacing: 1,
+              background: 'none', border: 'none', color: MUTED,
+              cursor: 'pointer', fontSize: 11, letterSpacing: 0,
               fontFamily: FONT, textDecoration: 'underline', padding: 0,
             }}
           >
-            About this site
+            About
           </button>
         </p>
       </footer>
