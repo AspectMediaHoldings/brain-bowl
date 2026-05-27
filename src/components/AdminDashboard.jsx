@@ -1215,8 +1215,92 @@ ALTER TABLE profiles ADD COLUMN IF NOT EXISTS suspended boolean DEFAULT false;`}
   );
 }
 
+// ── COACH APPLICATIONS ───────────────────────────────────────
+function CoachApplicationsTab() {
+  const [apps, setApps] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [working, setWorking] = useState(null);
+
+  useEffect(() => { loadApps(); }, []);
+
+  async function loadApps() {
+    setLoading(true);
+    try {
+      const { data } = await supabase.from('coach_applications').select('*').order('created_at', { ascending: false });
+      setApps(data ?? []);
+    } catch { /* table not yet provisioned */ }
+    setLoading(false);
+  }
+
+  async function approve(app) {
+    setWorking(app.id);
+    try {
+      await supabase.from('coach_applications').update({ status: 'approved' }).eq('id', app.id);
+      await supabase.from('profiles').update({ role: 'coach', coach_status: 'approved' }).eq('id', app.user_id);
+      setApps(prev => prev.map(a => a.id === app.id ? { ...a, status: 'approved' } : a));
+    } catch (e) { alert(e.message); }
+    setWorking(null);
+  }
+
+  async function deny(app) {
+    setWorking(app.id);
+    try {
+      await supabase.from('coach_applications').update({ status: 'denied' }).eq('id', app.id);
+      await supabase.from('profiles').update({ coach_status: 'denied' }).eq('id', app.user_id);
+      setApps(prev => prev.map(a => a.id === app.id ? { ...a, status: 'denied' } : a));
+    } catch (e) { alert(e.message); }
+    setWorking(null);
+  }
+
+  if (loading) return <div style={{ color: '#4a4d60', fontSize: 13 }}>Loading...</div>;
+  if (!apps.length) return <div style={{ color: '#4a4d60', fontSize: 13 }}>No applications yet.</div>;
+
+  const pending = apps.filter(a => a.status === 'pending');
+  const resolved = apps.filter(a => a.status !== 'pending');
+
+  return (
+    <div>
+      {pending.length > 0 && (
+        <>
+          <div style={{ fontSize: 11, color: '#f39c12', letterSpacing: 2, textTransform: 'uppercase', marginBottom: 10, fontWeight: 700 }}>Pending ({pending.length})</div>
+          {pending.map(app => (
+            <div key={app.id} style={{ background: '#1a1b25', border: '1px solid #2a2d40', borderRadius: 6, padding: '14px 16px', marginBottom: 10 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12 }}>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 4 }}>{app.full_name}</div>
+                  <div style={{ fontSize: 12, color: '#6b7084', marginBottom: 2 }}>{app.email}{app.phone ? ` · ${app.phone}` : ''}</div>
+                  <div style={{ fontSize: 12, color: '#8a8d9e' }}>{app.position} — {app.school_name}, {app.county} County</div>
+                  <div style={{ fontSize: 11, color: '#4a4d60', marginTop: 4 }}>{new Date(app.created_at).toLocaleDateString()}</div>
+                </div>
+                <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
+                  <button disabled={working === app.id} onClick={() => approve(app)} style={{ padding: '6px 14px', fontSize: 12, fontWeight: 700, background: '#27ae60', border: 'none', borderRadius: 4, color: '#fff', cursor: 'pointer', fontFamily: 'inherit' }}>Approve</button>
+                  <button disabled={working === app.id} onClick={() => deny(app)} style={{ padding: '6px 14px', fontSize: 12, fontWeight: 700, background: 'transparent', border: '1px solid #c0392b', borderRadius: 4, color: '#c0392b', cursor: 'pointer', fontFamily: 'inherit' }}>Deny</button>
+                </div>
+              </div>
+            </div>
+          ))}
+        </>
+      )}
+      {resolved.length > 0 && (
+        <>
+          <div style={{ fontSize: 11, color: '#4a4d60', letterSpacing: 2, textTransform: 'uppercase', margin: '16px 0 10px', fontWeight: 700 }}>Resolved ({resolved.length})</div>
+          {resolved.map(app => (
+            <div key={app.id} style={{ background: '#12131a', border: '1px solid #1e2030', borderRadius: 6, padding: '10px 16px', marginBottom: 8, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div>
+                <span style={{ fontWeight: 600, fontSize: 13 }}>{app.full_name}</span>
+                <span style={{ fontSize: 12, color: '#6b7084', marginLeft: 10 }}>{app.school_name}, {app.county} County</span>
+              </div>
+              <span style={{ fontSize: 11, fontWeight: 700, padding: '3px 10px', borderRadius: 3, background: app.status === 'approved' ? '#1a2e1a' : '#2e1a1a', color: app.status === 'approved' ? '#27ae60' : '#c0392b', textTransform: 'uppercase', letterSpacing: 1 }}>{app.status}</span>
+            </div>
+          ))}
+        </>
+      )}
+    </div>
+  );
+}
+
 // ── MAIN ─────────────────────────────────────────────────────
-const TABS = ['users', 'assignments', 'coaches', 'schools', 'leaderboard', 'activity', 'analytics', 'announcements', 'flags', 'audit'];
+const TABS = ['users', 'assignments', 'coaches', 'applications', 'schools', 'leaderboard', 'activity', 'analytics', 'announcements', 'flags', 'audit'];
 
 export default function AdminDashboard({ user, onBack }) {
   const [tab, setTab] = useState('users');
@@ -1241,6 +1325,7 @@ export default function AdminDashboard({ user, onBack }) {
           {tab === 'users' && <UsersTab currentUserId={user.id} />}
           {tab === 'assignments' && <AssignmentsTab />}
           {tab === 'coaches' && <CoachesTab />}
+          {tab === 'applications' && <CoachApplicationsTab />}
           {tab === 'schools' && <SchoolsTab />}
           {tab === 'leaderboard' && <LeaderboardTab />}
           {tab === 'activity' && <ActivityTab />}
