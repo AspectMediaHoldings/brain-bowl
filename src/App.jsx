@@ -39,6 +39,7 @@ export default function App() {
   const { saveSession } = useSession(user);
 
   const [screen, setScreen] = useState('home');
+  const [sessionId, setSessionId] = useState(null);
   const [queue, setQueue] = useState([]);
   const [qIdx, setQIdx] = useState(0);
   const [score, setScore] = useState({ ...INIT_SCORE });
@@ -70,6 +71,7 @@ export default function App() {
       setQIdx(0);
       setScore({ ...INIT_SCORE });
       setCurrentBonus(null);
+      setSessionId(crypto.randomUUID());
       setScreen('tossup');
     } catch (e) {
       setError(`Failed to load questions: ${e.message}`);
@@ -140,7 +142,7 @@ export default function App() {
 
   useEffect(() => {
     if (screen === 'results' && user && queueRef.current.length > 0) {
-      saveSession(scoreRef.current, filtersRef.current);
+      saveSession(sessionId, scoreRef.current, filtersRef.current);
       if (activeAssignmentId) {
         supabase.from('practice_assignments').update({ completed_at: new Date().toISOString() }).eq('id', activeAssignmentId).then(() => {});
         setActiveAssignmentId(null);
@@ -323,7 +325,7 @@ export default function App() {
             </div>
           </div>
         </div>
-        <TossupPlayer key={qIdx} tossup={queue[qIdx]} onResult={handleTossupResult} questionNum={qIdx + 1} total={queue.length} defaultSpeed={filters?.speed ?? 240} onSaveFlashcard={handleSaveFlashcard} onFlagQuestion={user ? handleFlagQuestion : undefined} />
+        <TossupPlayer key={qIdx} tossup={queue[qIdx]} onResult={handleTossupResult} questionNum={qIdx + 1} total={queue.length} defaultSpeed={filters?.speed ?? 240} onSaveFlashcard={handleSaveFlashcard} onFlagQuestion={user ? handleFlagQuestion : undefined} sessionId={sessionId} userId={user?.id} />
       </div>
     );
   }
@@ -342,7 +344,7 @@ export default function App() {
             </div>
           </div>
         </div>
-        <BonusPlayer bonus={currentBonus} tossupAnswer={lastTossupAnswer} onDone={handleBonusDone} />
+        <BonusPlayer bonus={currentBonus} tossupAnswer={lastTossupAnswer} onDone={handleBonusDone} sessionId={sessionId} userId={user?.id} />
       </div>
     );
   }
