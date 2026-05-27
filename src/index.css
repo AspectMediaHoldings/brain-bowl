@@ -1,0 +1,31 @@
+/* Mobile responsiveness */
+* { box-sizing: border-box; }
+
+@media (max-width: 600px) {
+  /* Nav cards: 2-up on phone */
+  .bb-nav-grid { gap: 8px !important; }
+  .bb-nav-grid button { flex: 1 1 calc(50% - 4px) !important; padding: 12px 8px !important; }
+
+  /* Tossup reader: comfortable reading size */
+  .bb-tossup-text { font-size: 16px !important; line-height: 1.7 !important; }
+
+  /* Stats/results grids: single column */
+  .bb-two-col { grid-template-columns: 1fr !important; }
+
+  /* Touch targets: minimum 44px */
+  button { min-height: 36px; }
+
+  /* Prevent horizontal scroll */
+  body { overflow-x: hidden; }
+
+  /* Topbar: smaller padding */
+  .bb-topbar-inner { padding: 0 12px !important; font-size: 12px !important; }
+
+  /* Assignment cards: stack on small screens */
+  .bb-assign-card { flex-direction: column !important; align-items: flex-start !important; }
+  .bb-assign-card button { width: 100% !important; margin-top: 8px !important; }
+}
+
+@media (max-width: 400px) {
+  .bb-nav-grid button { flex: 1 1 100% !important; }
+}
