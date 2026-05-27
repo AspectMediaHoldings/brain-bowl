@@ -114,7 +114,7 @@ export default function FlashcardEditor({ user, onBack }) {
 
         {msg && <div style={msg.type === 'err' ? S.err : S.ok}>{msg.text}</div>}
 
-        <div style={{ display: 'grid', gridTemplateColumns: '220px 1fr', gap: 16, alignItems: 'start' }}>
+        <div className="bb-fc-layout" style={{ display: 'grid', gridTemplateColumns: '220px 1fr', gap: 16, alignItems: 'start' }}>
           <div>
             <button style={{ ...btn(), width: '100%', marginBottom: 10 }} onClick={createNewSet}>+ New Set</button>
             {sets.length === 0
@@ -131,7 +131,7 @@ export default function FlashcardEditor({ user, onBack }) {
             <div>
               <div style={S.card}>
                 <div style={S.h2}>Set Details</div>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 12 }}>
+                <div className="bb-fc-two-col" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 12 }}>
                   <div>
                     <div style={{ fontSize: 11, color: '#6b7084', marginBottom: 5, letterSpacing: 1, textTransform: 'uppercase' }}>Title</div>
                     <input style={S.inp} value={editing.title} onChange={e => setEditing(ed => ({ ...ed, title: e.target.value }))} placeholder="Set title" />
@@ -158,7 +158,7 @@ export default function FlashcardEditor({ user, onBack }) {
 
               <div style={S.card}>
                 <div style={S.h2}>{editingCard ? 'Edit Card' : 'Add Card'}</div>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 10 }}>
+                <div className="bb-fc-two-col" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 10 }}>
                   <div>
                     <div style={{ fontSize: 11, color: '#6b7084', marginBottom: 5, letterSpacing: 1, textTransform: 'uppercase' }}>Front</div>
                     <textarea style={{ ...S.inp, height: 70, resize: 'vertical' }} value={cardFront} onChange={e => setCardFront(e.target.value)} placeholder="Clue or term" />
@@ -182,7 +182,7 @@ export default function FlashcardEditor({ user, onBack }) {
                 <div style={S.card}>
                   <div style={S.h2}>Cards ({editing.cards.length})</div>
                   {editing.cards.map(c => (
-                    <div key={c.id} style={{ padding: '10px 0', borderBottom: '1px solid #1e2030', display: 'grid', gridTemplateColumns: '1fr 1fr 80px', gap: 12, alignItems: 'start', fontSize: 13 }}>
+                    <div key={c.id} className="bb-fc-card-row" style={{ padding: '10px 0', borderBottom: '1px solid #1e2030', display: 'grid', gridTemplateColumns: '1fr 1fr 80px', gap: 12, alignItems: 'start', fontSize: 13 }}>
                       <div style={{ color: '#e8e6e1' }}>{c.front}</div>
                       <div style={{ color: '#8a8d9e' }}>{c.back}</div>
                       <div style={{ display: 'flex', gap: 5 }}>

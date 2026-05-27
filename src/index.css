@@ -24,6 +24,27 @@
   /* Assignment cards: stack on small screens */
   .bb-assign-card { flex-direction: column !important; align-items: flex-start !important; }
   .bb-assign-card button { width: 100% !important; margin-top: 8px !important; }
+
+  /* ── Landing page ───────────────────────────── */
+
+  /* Hero buttons: stack full-width */
+  .bb-hero-btns { flex-direction: column !important; align-items: stretch !important; }
+  .bb-hero-btns button { width: 100% !important; }
+
+  /* Category badges: smaller */
+  .bb-cat-badges span { font-size: 10px !important; padding: 3px 9px !important; }
+
+  /* ── Flashcard Editor ───────────────────────── */
+
+  /* Main layout: sidebar stacks above editor */
+  .bb-fc-layout { grid-template-columns: 1fr !important; }
+
+  /* Set details + add card: front/back stack vertically */
+  .bb-fc-two-col { grid-template-columns: 1fr !important; }
+
+  /* Card list rows: stack text + action buttons */
+  .bb-fc-card-row { grid-template-columns: 1fr !important; }
+  .bb-fc-card-row > div:last-child { justify-content: flex-start !important; }
 }
 
 @media (max-width: 400px) {
