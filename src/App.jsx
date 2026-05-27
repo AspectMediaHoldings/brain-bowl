@@ -180,6 +180,9 @@ export default function App() {
   // ─── ADMIN DASHBOARD ─────────────────────────────────────────────
   if (screen === 'admin' && isAdmin) return <AdminDashboard user={user} onBack={() => setScreen('home')} />;
 
+  // ── FLASHCARDS ────────────────────────────────────────────────
+  if (screen === 'flashcards') return <FlashcardEditor user={user} onBack={() => setScreen('home')} />;
+
   // ─── LOADING ─────────────────────────────────────────────────────
   if (screen === 'loading') {
     return (
@@ -197,6 +200,7 @@ export default function App() {
     const navItems = [
       { label: 'Question Database', sub: 'Search · Frequency · Sets', color: '#7b9fff', onClick: () => setScreen('db'), show: true },
       { label: 'My Stats', sub: 'Session history & trends', color: '#C9A227', onClick: () => setScreen('stats'), show: !!user },
+      { label: 'Flashcards', sub: 'Create · Study · Download', color: '#9b59b6', onClick: () => setScreen('flashcards'), show: !!user },
       { label: 'Coach Roster', sub: 'Manage your students', color: '#20B2AA', onClick: () => setScreen('coach'), show: isCoach || isAdmin },
       { label: 'Admin Panel', sub: 'Users · Assignments · Activity', color: '#f5c518', onClick: () => setScreen('admin'), show: isAdmin },
     ].filter(n => n.show);
@@ -207,8 +211,8 @@ export default function App() {
       <>
         {visibleAnnouncements.length > 0 && visibleAnnouncements.map(ann => (
           <div key={ann.id} style={{ background: '#1a2030', borderBottom: '1px solid #C9A227', padding: '10px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <div style={{ fontSize: 13, color: '#e8e6e1' }}><strong style={{ color: '#C9A227' }}>{ann.title}</strong>{ann.body ? ' � ' + ann.body : ''}</div>
-            <button onClick={() => setDismissedAnnouncements(s => new Set([...s, ann.id]))} style={{ background: 'none', border: 'none', color: '#4a4d60', cursor: 'pointer', fontSize: 18, lineHeight: 1, padding: '0 4px' }}>�</button>
+            <div style={{ fontSize: 13, color: '#e8e6e1' }}><strong style={{ color: '#C9A227' }}>{ann.title}</strong>{ann.body ? ' � ' + ann.body : ''}</div>
+            <button onClick={() => setDismissedAnnouncements(s => new Set([...s, ann.id]))} style={{ background: 'none', border: 'none', color: '#4a4d60', cursor: 'pointer', fontSize: 18, lineHeight: 1, padding: '0 4px' }}>�</button>
           </div>
         ))}
         {user && (
