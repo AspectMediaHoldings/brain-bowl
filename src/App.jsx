@@ -46,6 +46,8 @@ export default function App() {
   const [error, setError] = useState(null);
   const [announcements, setAnnouncements] = useState([]);
   const [dismissedAnnouncements, setDismissedAnnouncements] = useState(new Set());
+  const [pendingAssignments, setPendingAssignments] = useState([]);
+  const [activeAssignmentId, setActiveAssignmentId] = useState(null);
 
   const queueRef = useRef(queue);
   queueRef.current = queue;
@@ -110,6 +112,15 @@ export default function App() {
 
   const handleRestart = () => { setScreen('home'); setQueue([]); setScore({ ...INIT_SCORE }); setCurrentBonus(null); setError(null); };
   const handleSaveFlashcard = (front, back) => quickSaveCard(user || null, front, back);
+  const handleStartAssignment = (assignment) => {
+    setActiveAssignmentId(assignment.id);
+    handleStart({
+      categories: assignment.categories ?? [],
+      difficulties: assignment.difficulties ?? [3, 4, 5],
+      num: assignment.num_questions ?? 20,
+    });
+  };
+
   const handleEndSession = () => setScreen('results');
   const handleFlagQuestion = async (tossup) => {
     if (!user) return;
@@ -127,6 +138,11 @@ export default function App() {
   useEffect(() => {
     if (screen === 'results' && user && queueRef.current.length > 0) {
       saveSession(scoreRef.current, filtersRef.current);
+      if (activeAssignmentId) {
+        supabase.from('practice_assignments').update({ completed_at: new Date().toISOString() }).eq('id', activeAssignmentId).then(() => {});
+        setActiveAssignmentId(null);
+        setPendingAssignments(p => p.filter(a => a.id !== activeAssignmentId));
+      }
     }
   }, [screen]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -139,6 +155,16 @@ export default function App() {
     }
     fetchAnnouncements();
   }, []);
+
+  useEffect(() => {
+    if (!user) { setPendingAssignments([]); return; }
+    supabase.from('practice_assignments')
+      .select('id, title, categories, difficulties, num_questions, due_date')
+      .eq('student_id', user.id)
+      .is('completed_at', null)
+      .order('due_date', { ascending: true, nullsFirst: false })
+      .then(({ data }) => setPendingAssignments(data ?? []));
+  }, [user]);
 
   const sessionTotal = score.pts + score.bonusPts;
 
@@ -239,6 +265,31 @@ export default function App() {
                   <div style={{ fontSize: 13, fontWeight: 700, color, marginBottom: 3 }}>{label}</div>
                   <div style={{ fontSize: 11, color: '#8a8d9e' }}>{sub}</div>
                 </button>
+              ))}
+            </div>
+          </div>
+        )}
+        {pendingAssignments.length > 0 && (
+          <div style={{ maxWidth: 800, margin: '0 auto', padding: '16px 20px 0' }}>
+            <div style={{ fontSize: 11, color: '#20B2AA', letterSpacing: 2, textTransform: 'uppercase', marginBottom: 8 }}>Coach Assignments</div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {pendingAssignments.map(a => (
+                <div key={a.id} style={{ background: '#0d1a1a', border: '1px solid #20B2AA44', borderRadius: 8, padding: '12px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: '#20B2AA' }}>{a.title}</div>
+                    <div style={{ fontSize: 11, color: '#6b7084', marginTop: 3 }}>
+                      {a.num_questions} questions
+                      {a.categories?.length ? ' · ' + a.categories.join(', ') : ''}
+                      {a.due_date ? ' · Due ' + new Date(a.due_date + 'T00:00:00').toLocaleDateString() : ''}
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => handleStartAssignment(a)}
+                    style={{ padding: '7px 14px', fontSize: 12, fontWeight: 700, background: '#20B2AA', border: 'none', borderRadius: 5, color: '#0a0b0f', cursor: 'pointer', fontFamily: 'inherit', letterSpacing: 1, whiteSpace: 'nowrap', flexShrink: 0 }}
+                  >
+                    Start Practice
+                  </button>
+                </div>
               ))}
             </div>
           </div>
