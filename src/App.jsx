@@ -12,6 +12,7 @@ import DBBrowser from './components/DBBrowser';
 import FlashcardEditor from './components/FlashcardEditor';
 import LeaderboardScreen from './components/LeaderboardScreen';
 import LandingPage from './components/LandingPage';
+import CoachApplicationForm from './components/CoachApplicationForm';
 import { fetchTossups, fetchRandomBonus } from './utils/qbApi';
 import { quickSaveCard } from './utils/flashcards';
 import { supabase } from './lib/supabase';
@@ -220,6 +221,9 @@ export default function App() {
   // ── LEADERBOARD ──────────────────────────────────────────
   if (screen === 'leaderboard') return <LeaderboardScreen onBack={() => setScreen('home')} currentUserId={user?.id} />;
 
+  // ── COACH APPLICATION ────────────────────────────────────
+  if (screen === 'apply-coach' && user) return <CoachApplicationForm user={user} onBack={() => setScreen('home')} />;
+
   // ─── LOADING ─────────────────────────────────────────────────────
   if (screen === 'loading') {
     return (
@@ -240,6 +244,7 @@ export default function App() {
       { label: 'Flashcards', sub: 'Create · Study · Download', color: '#9b59b6', onClick: () => setScreen('flashcards'), show: !!user },
       { label: 'Leaderboard', sub: 'Top students · All time', color: '#e67e22', onClick: () => setScreen('leaderboard'), show: true },
       { label: 'Coach Roster', sub: 'Manage your students', color: '#20B2AA', onClick: () => setScreen('coach'), show: isCoach || isAdmin },
+      { label: 'Apply as Coach', sub: 'Submit coach application', color: '#20B2AA', onClick: () => setScreen('apply-coach'), show: !!user && !isCoach && !isAdmin },
       { label: 'Admin Panel', sub: 'Users · Assignments · Activity', color: '#f5c518', onClick: () => setScreen('admin'), show: isAdmin },
     ].filter(n => n.show);
 
