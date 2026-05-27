@@ -10,6 +10,8 @@ import CoachDashboard from './components/CoachDashboard';
 import AdminDashboard from './components/AdminDashboard';
 import DBBrowser from './components/DBBrowser';
 import FlashcardEditor from './components/FlashcardEditor';
+import LeaderboardScreen from './components/LeaderboardScreen';
+import LandingPage from './components/LandingPage';
 import { fetchTossups, fetchRandomBonus } from './utils/qbApi';
 import { quickSaveCard } from './utils/flashcards';
 import { supabase } from './lib/supabase';
@@ -48,6 +50,7 @@ export default function App() {
   const [dismissedAnnouncements, setDismissedAnnouncements] = useState(new Set());
   const [pendingAssignments, setPendingAssignments] = useState([]);
   const [activeAssignmentId, setActiveAssignmentId] = useState(null);
+  const [showAuth, setShowAuth] = useState(false);
 
   const queueRef = useRef(queue);
   queueRef.current = queue;
@@ -178,7 +181,10 @@ export default function App() {
   }
 
   // ─── AUTH GATE ───────────────────────────────────────────────────
-  if (!user && !guest) return <AuthGate onGuest={continueAsGuest} />;
+  if (!user && !guest) {
+    if (showAuth) return <AuthGate onGuest={continueAsGuest} />;
+    return <LandingPage onSignIn={() => setShowAuth(true)} onGuest={continueAsGuest} />;
+  }
 
   // ─── COACH MFA SETUP ─────────────────────────────────────────────
   if (needsMFASetup) return <MFASetup />;
@@ -209,6 +215,9 @@ export default function App() {
   // ── FLASHCARDS ────────────────────────────────────────────────
   if (screen === 'flashcards') return <FlashcardEditor user={user} onBack={() => setScreen('home')} />;
 
+  // ── LEADERBOARD ──────────────────────────────────────────
+  if (screen === 'leaderboard') return <LeaderboardScreen onBack={() => setScreen('home')} currentUserId={user?.id} />;
+
   // ─── LOADING ─────────────────────────────────────────────────────
   if (screen === 'loading') {
     return (
@@ -227,6 +236,7 @@ export default function App() {
       { label: 'Question Database', sub: 'Search · Frequency · Sets', color: '#7b9fff', onClick: () => setScreen('db'), show: true },
       { label: 'My Stats', sub: 'Session history & trends', color: '#C9A227', onClick: () => setScreen('stats'), show: !!user },
       { label: 'Flashcards', sub: 'Create · Study · Download', color: '#9b59b6', onClick: () => setScreen('flashcards'), show: !!user },
+      { label: 'Leaderboard', sub: 'Top students · All time', color: '#e67e22', onClick: () => setScreen('leaderboard'), show: true },
       { label: 'Coach Roster', sub: 'Manage your students', color: '#20B2AA', onClick: () => setScreen('coach'), show: isCoach || isAdmin },
       { label: 'Admin Panel', sub: 'Users · Assignments · Activity', color: '#f5c518', onClick: () => setScreen('admin'), show: isAdmin },
     ].filter(n => n.show);
