@@ -33,7 +33,7 @@ const S = {
   }),
 };
 
-export default function TossupPlayer({ tossup, onResult, questionNum, total, defaultSpeed = 120, onSaveFlashcard }) {
+export default function TossupPlayer({ tossup, onResult, questionNum, total, defaultSpeed = 120, onSaveFlashcard, onFlagQuestion }) {
   const words = useMemo(() => parseWords(tossup.question_sanitized ?? tossup.question ?? ''), [tossup.question_sanitized, tossup.question]);
   const powerIdx = useMemo(() => findPowerIdx(words), [words]);
 
@@ -44,6 +44,7 @@ export default function TossupPlayer({ tossup, onResult, questionNum, total, def
   const [paused, setPaused] = useState(false);
   const [speed, setSpeed] = useState(defaultSpeed);
   const [savedFlash, setSavedFlash] = useState(false);
+  const [flagged, setFlagged] = useState(false);
 
   const timerRef = useRef(null);
   const inputRef = useRef(null);
@@ -118,6 +119,12 @@ export default function TossupPlayer({ tossup, onResult, questionNum, total, def
     setTimeout(() => setSavedFlash(false), 2500);
   }
 
+  async function handleFlagQuestion() {
+    if (!onFlagQuestion || flagged) return;
+    await onFlagQuestion(tossup);
+    setFlagged(true);
+  }
+
   return (
     <div style={S.wrap}>
       <div style={S.box}>
@@ -178,6 +185,14 @@ export default function TossupPlayer({ tossup, onResult, questionNum, total, def
                 style={{ marginTop: 12, padding: '6px 14px', fontSize: 12, fontWeight: 700, background: 'transparent', border: '1px solid #20B2AA', borderRadius: 5, color: savedFlash ? '#27ae60' : '#20B2AA', cursor: 'pointer', fontFamily: 'inherit' }}
               >
                 {savedFlash ? 'Saved!' : '+ Save as Flashcard'}
+              </button>
+            )}
+            {onFlagQuestion && (
+              <button
+                onClick={handleFlagQuestion}
+                style={{ marginTop: 12, marginLeft: 8, padding: '6px 14px', fontSize: 12, fontWeight: 700, background: 'transparent', border: '1px solid ' + (flagged ? '#3a3d50' : '#c0392b'), borderRadius: 5, color: flagged ? '#4a4d60' : '#c0392b', cursor: flagged ? 'default' : 'pointer', fontFamily: 'inherit' }}
+              >
+                {flagged ? 'Flagged' : 'Flag Question'}
               </button>
             )}
           </div>

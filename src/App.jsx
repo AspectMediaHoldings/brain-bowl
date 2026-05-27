@@ -12,6 +12,7 @@ import DBBrowser from './components/DBBrowser';
 import FlashcardEditor from './components/FlashcardEditor';
 import { fetchTossups, fetchRandomBonus } from './utils/qbApi';
 import { quickSaveCard } from './utils/flashcards';
+import { supabase } from './lib/supabase';
 import { useAuth } from './hooks/useAuth';
 import { useSession } from './hooks/useSession';
 
@@ -43,6 +44,8 @@ export default function App() {
   const [lastTossupAnswer, setLastTossupAnswer] = useState('');
   const [filters, setFilters] = useState(null);
   const [error, setError] = useState(null);
+  const [announcements, setAnnouncements] = useState([]);
+  const [dismissedAnnouncements, setDismissedAnnouncements] = useState(new Set());
 
   const queueRef = useRef(queue);
   queueRef.current = queue;
@@ -108,12 +111,34 @@ export default function App() {
   const handleRestart = () => { setScreen('home'); setQueue([]); setScore({ ...INIT_SCORE }); setCurrentBonus(null); setError(null); };
   const handleSaveFlashcard = (front, back) => quickSaveCard(user || null, front, back);
   const handleEndSession = () => setScreen('results');
+  const handleFlagQuestion = async (tossup) => {
+    if (!user) return;
+    try {
+      await supabase.from('question_flags').insert({
+        user_id: user.id,
+        question_id: String(tossup._id ?? tossup.id ?? ''),
+        question_type: 'tossup',
+        question_text: (tossup.question_sanitized ?? tossup.question ?? '').slice(0, 500),
+        answer: tossup.answer ?? '',
+      });
+    } catch { /* table may not exist yet */ }
+  };
 
   useEffect(() => {
     if (screen === 'results' && user && queueRef.current.length > 0) {
       saveSession(scoreRef.current, filtersRef.current);
     }
   }, [screen]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    async function fetchAnnouncements() {
+      try {
+        const { data } = await supabase.from('announcements').select('id, title, body').eq('active', true);
+        if (data) setAnnouncements(data);
+      } catch { /* no announcements table yet */ }
+    }
+    fetchAnnouncements();
+  }, []);
 
   const sessionTotal = score.pts + score.bonusPts;
 
@@ -176,8 +201,16 @@ export default function App() {
       { label: 'Admin Panel', sub: 'Users Â· Assignments Â· Activity', color: '#f5c518', onClick: () => setScreen('admin'), show: isAdmin },
     ].filter(n => n.show);
 
+    const visibleAnnouncements = announcements.filter(a => !dismissedAnnouncements.has(a.id));
+
     return (
       <>
+        {visibleAnnouncements.length > 0 && visibleAnnouncements.map(ann => (
+          <div key={ann.id} style={{ background: '#1a2030', borderBottom: '1px solid #C9A227', padding: '10px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div style={{ fontSize: 13, color: '#e8e6e1' }}><strong style={{ color: '#C9A227' }}>{ann.title}</strong>{ann.body ? ' — ' + ann.body : ''}</div>
+            <button onClick={() => setDismissedAnnouncements(s => new Set([...s, ann.id]))} style={{ background: 'none', border: 'none', color: '#4a4d60', cursor: 'pointer', fontSize: 18, lineHeight: 1, padding: '0 4px' }}>×</button>
+          </div>
+        ))}
         {user && (
           <div style={S.topBar}>
             <div style={S.topBarInner}>
@@ -225,7 +258,7 @@ export default function App() {
             </div>
           </div>
         </div>
-        <TossupPlayer key={qIdx} tossup={queue[qIdx]} onResult={handleTossupResult} questionNum={qIdx + 1} total={queue.length} defaultSpeed={filters?.speed ?? 240} onSaveFlashcard={handleSaveFlashcard} />
+        <TossupPlayer key={qIdx} tossup={queue[qIdx]} onResult={handleTossupResult} questionNum={qIdx + 1} total={queue.length} defaultSpeed={filters?.speed ?? 240} onSaveFlashcard={handleSaveFlashcard} onFlagQuestion={user ? handleFlagQuestion : undefined} />
       </div>
     );
   }

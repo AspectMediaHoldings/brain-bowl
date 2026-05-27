@@ -154,7 +154,7 @@ function UsersTab({ currentUserId }) {
     setLoading(true);
     try {
       const [{ data: profiles }, { data: assignments }] = await Promise.all([
-        supabase.from('profiles').select('id, display_name, role').order('display_name'),
+        supabase.from('profiles').select('id, display_name, role, suspended').order('display_name'),
         supabase.from('coach_students').select('student_id, coach_id').eq('status', 'active'),
       ]);
       const assignMap = Object.fromEntries((assignments ?? []).map(a => [a.student_id, a.coach_id]));
@@ -190,6 +190,17 @@ function UsersTab({ currentUserId }) {
 
   async function removeAssignment(studentId) {
     await supabase.from('coach_students').update({ status: 'removed' }).eq('student_id', studentId);
+    loadAll();
+  }
+
+  async function toggleSuspend(userId, currentlySuspended) {
+    const action = currentlySuspended ? 'unsuspend' : 'suspend';
+    if (!window.confirm(action.charAt(0).toUpperCase() + action.slice(1) + ' this user?')) return;
+    const { error } = await supabase.from('profiles').update({ suspended: !currentlySuspended }).eq('id', userId);
+    if (error) { setMsg({ type: 'err', text: error.message }); return; }
+    try {
+      await supabase.from('audit_log').insert({ admin_id: currentUserId, action, target_id: userId });
+    } catch { /* audit_log table may not exist */ }
     loadAll();
   }
 
@@ -269,9 +280,10 @@ function UsersTab({ currentUserId }) {
           <tbody>
             {filtered.map((u, i) => (
               <tr key={u.id} style={{ borderBottom: '1px solid #1e2030', background: i % 2 === 1 ? '#0f1018' : 'transparent' }}>
-                <td style={{ ...S.td, fontWeight: 600, cursor: 'pointer', color: '#C9A227', textDecoration: 'underline' }}
+                <td style={{ ...S.td, fontWeight: 600, cursor: 'pointer', color: u.suspended ? '#6b7084' : '#C9A227', textDecoration: 'underline' }}
                   onClick={() => setSelectedStudent(u)}>
                   {u.display_name ?? '(no name)'}
+                  {u.suspended && <span style={{ fontSize: 9, marginLeft: 6, padding: '1px 5px', borderRadius: 3, background: '#c0392b22', color: '#c0392b', fontWeight: 700, letterSpacing: 1, textTransform: 'uppercase', textDecoration: 'none', display: 'inline-block' }}>SUSPENDED</span>}
                 </td>
                 <td style={S.td}>
                   <select style={S.sel} value={u.role ?? 'student'} onChange={e => updateRole(u.id, e.target.value)}>
@@ -282,13 +294,18 @@ function UsersTab({ currentUserId }) {
                   {u.coachName ?? <span style={{ color: '#2a2d40' }}>unassigned</span>}
                 </td>
                 <td style={S.td}>
-                  <div style={{ display: 'flex', gap: 6 }}>
+                  <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
                     {u.role === 'student' && (
                       <button style={S.btn('#20B2AA', true)} onClick={() => { setAssignTarget(u); setSelectedCoach(u.coachId ?? ''); }}>
                         {u.coachId ? 'Reassign' : 'Assign Coach'}
                       </button>
                     )}
                     {u.coachId && <button style={S.btn('#c0392b', true)} onClick={() => removeAssignment(u.id)}>Unassign</button>}
+                    {u.id !== currentUserId && (
+                      <button style={S.btn(u.suspended ? '#27ae60' : '#e67e22', true)} onClick={() => toggleSuspend(u.id, !!u.suspended)}>
+                        {u.suspended ? 'Unsuspend' : 'Suspend'}
+                      </button>
+                    )}
                   </div>
                 </td>
               </tr>
@@ -954,8 +971,252 @@ CREATE POLICY "admin read" ON page_events FOR SELECT
   );
 }
 
+
+// ── ANNOUNCEMENTS TAB ────────────────────────────────────────
+function AnnouncementsTab({ currentUserId }) {
+  const [rows, setRows] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [msg, setMsg] = useState(null);
+  const [creating, setCreating] = useState(false);
+  const [form, setForm] = useState({ title: '', body: '' });
+  const [noTable, setNoTable] = useState(false);
+
+  useEffect(() => { load(); }, []);
+
+  async function load() {
+    setLoading(true);
+    const { data, error } = await supabase.from('announcements').select('*').order('created_at', { ascending: false });
+    if (error?.code === '42P01') { setNoTable(true); setLoading(false); return; }
+    setRows(data ?? []);
+    setLoading(false);
+  }
+
+  async function createAnnouncement() {
+    if (!form.title.trim()) return;
+    const { error } = await supabase.from('announcements').insert({ title: form.title.trim(), body: form.body.trim() || null, created_by: currentUserId });
+    if (error) { setMsg({ type: 'err', text: error.message }); return; }
+    setForm({ title: '', body: '' });
+    setCreating(false);
+    load();
+  }
+
+  async function toggleActive(id, current) {
+    const { error } = await supabase.from('announcements').update({ active: !current }).eq('id', id);
+    if (error) { setMsg({ type: 'err', text: error.message }); return; }
+    load();
+  }
+
+  async function deleteAnn(id) {
+    if (!window.confirm('Delete this announcement?')) return;
+    await supabase.from('announcements').delete().eq('id', id);
+    load();
+  }
+
+  if (loading) return <div style={{ textAlign: 'center', color: '#4a4d60', padding: 40 }}>Loading...</div>;
+
+  if (noTable) return (
+    <div>
+      <div style={S.err}>Run this SQL in Supabase to enable announcements:</div>
+      <pre style={{ background: '#0a0b0f', border: '1px solid #2a2d40', borderRadius: 6, padding: 16, fontSize: 12, color: '#a0a3b0', overflowX: 'auto' }}>{`CREATE TABLE announcements (
+  id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+  title text NOT NULL,
+  body text,
+  active boolean DEFAULT false,
+  created_by uuid REFERENCES auth.users(id) ON DELETE SET NULL,
+  created_at timestamptz DEFAULT now()
+);
+ALTER TABLE announcements ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "admin manage" ON announcements FOR ALL
+  USING (EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'admin'));
+CREATE POLICY "anyone read active" ON announcements FOR SELECT USING (active = true);`}</pre>
+    </div>
+  );
+
+  return (
+    <div>
+      {msg && <div style={msg.type === 'err' ? S.err : S.ok}>{msg.text}</div>}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+        <div style={{ fontSize: 12, color: '#4a4d60' }}>{rows.filter(r => r.active).length} active · {rows.length} total</div>
+        <button style={S.btn()} onClick={() => setCreating(c => !c)}>{creating ? 'Cancel' : '+ New Announcement'}</button>
+      </div>
+      {creating && (
+        <div style={{ background: '#0d0e16', border: '1px solid #2a2d40', borderRadius: 6, padding: 16, marginBottom: 16 }}>
+          <input style={{ ...S.inp, display: 'block', width: '100%', marginBottom: 8 }} placeholder="Title *" value={form.title} onChange={e => setForm(p => ({ ...p, title: e.target.value }))} />
+          <input style={{ ...S.inp, display: 'block', width: '100%', marginBottom: 10 }} placeholder="Body text (optional)" value={form.body} onChange={e => setForm(p => ({ ...p, body: e.target.value }))} />
+          <button style={S.btn()} onClick={createAnnouncement} disabled={!form.title.trim()}>Create</button>
+        </div>
+      )}
+      {rows.length === 0 ? (
+        <div style={{ textAlign: 'center', color: '#4a4d60', padding: 32 }}>No announcements yet.</div>
+      ) : (
+        <div style={{ border: '1px solid #1e2030', borderRadius: 6, overflow: 'hidden' }}>
+          {rows.map((r, i) => (
+            <div key={r.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px', borderBottom: i < rows.length - 1 ? '1px solid #1e2030' : 'none', background: r.active ? '#0d160d' : 'transparent' }}>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: 13, fontWeight: 700, color: r.active ? '#27ae60' : '#e8e6e1' }}>{r.title}</div>
+                {r.body && <div style={{ fontSize: 12, color: '#6b7084', marginTop: 2 }}>{r.body}</div>}
+                <div style={{ fontSize: 11, color: '#4a4d60', marginTop: 4 }}>{new Date(r.created_at).toLocaleDateString()}</div>
+              </div>
+              <span style={S.statusBadge(r.active)}>{r.active ? 'ACTIVE' : 'INACTIVE'}</span>
+              <button style={S.btn(r.active ? '#e67e22' : '#27ae60', true)} onClick={() => toggleActive(r.id, r.active)}>
+                {r.active ? 'Deactivate' : 'Activate'}
+              </button>
+              <button style={{ ...S.btn('#c0392b', true), padding: '6px 10px' }} onClick={() => deleteAnn(r.id)}>Del</button>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── FLAGS TAB ────────────────────────────────────────────────
+function FlagsTab() {
+  const [flags, setFlags] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [noTable, setNoTable] = useState(false);
+  const [filter, setFilter] = useState('open');
+
+  useEffect(() => { load(); }, []);
+
+  async function load() {
+    setLoading(true);
+    const { data, error } = await supabase.from('question_flags').select('*').order('created_at', { ascending: false });
+    if (error?.code === '42P01') { setNoTable(true); setLoading(false); return; }
+    setFlags(data ?? []);
+    setLoading(false);
+  }
+
+  async function resolve(id) {
+    await supabase.from('question_flags').update({ resolved: true }).eq('id', id);
+    load();
+  }
+
+  if (loading) return <div style={{ textAlign: 'center', color: '#4a4d60', padding: 40 }}>Loading...</div>;
+
+  if (noTable) return (
+    <div>
+      <div style={S.err}>Run this SQL in Supabase to enable question flagging:</div>
+      <pre style={{ background: '#0a0b0f', border: '1px solid #2a2d40', borderRadius: 6, padding: 16, fontSize: 12, color: '#a0a3b0', overflowX: 'auto' }}>{`CREATE TABLE question_flags (
+  id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+  user_id uuid REFERENCES auth.users(id) ON DELETE SET NULL,
+  question_id text,
+  question_type text DEFAULT 'tossup',
+  question_text text,
+  answer text,
+  resolved boolean DEFAULT false,
+  created_at timestamptz DEFAULT now()
+);
+ALTER TABLE question_flags ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "users insert" ON question_flags FOR INSERT WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "admin manage" ON question_flags FOR ALL
+  USING (EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'admin'));`}</pre>
+    </div>
+  );
+
+  const visible = flags.filter(f => filter === 'open' ? !f.resolved : filter === 'resolved' ? f.resolved : true);
+
+  return (
+    <div>
+      <div style={{ display: 'flex', gap: 8, marginBottom: 16, flexWrap: 'wrap', alignItems: 'center' }}>
+        {[['open', 'Open'], ['resolved', 'Resolved'], ['all', 'All']].map(([v, label]) => (
+          <button key={v} style={S.btn(filter === v ? '#C9A227' : '#4a4d60', filter !== v)} onClick={() => setFilter(v)}>{label}</button>
+        ))}
+        <span style={{ fontSize: 12, color: '#4a4d60' }}>{visible.length} flag{visible.length !== 1 ? 's' : ''}</span>
+      </div>
+      {visible.length === 0 ? (
+        <div style={{ textAlign: 'center', color: '#4a4d60', padding: 32 }}>No flags in this view.</div>
+      ) : (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          {visible.map(f => (
+            <div key={f.id} style={{ background: '#0d0e16', border: '1px solid ' + (f.resolved ? '#1e2030' : '#c0392b44'), borderRadius: 6, padding: 14 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 10 }}>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: 11, color: '#4a4d60', marginBottom: 4 }}>{new Date(f.created_at).toLocaleString()} · {f.question_type}</div>
+                  {f.answer && <div style={{ fontSize: 12, color: '#C9A227', marginBottom: 4 }}>Answer: {f.answer}</div>}
+                  {f.question_text && <div style={{ fontSize: 12, color: '#8a8d9e', lineHeight: 1.5, maxHeight: 60, overflow: 'hidden' }}>{f.question_text}</div>}
+                </div>
+                {!f.resolved && <button style={S.btn('#27ae60', true)} onClick={() => resolve(f.id)}>Resolve</button>}
+                {f.resolved && <span style={S.statusBadge(false)}>RESOLVED</span>}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── AUDIT TAB ────────────────────────────────────────────────
+function AuditTab() {
+  const [rows, setRows] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [noTable, setNoTable] = useState(false);
+
+  useEffect(() => {
+    async function load() {
+      setLoading(true);
+      const { data, error } = await supabase.from('audit_log').select('*').order('created_at', { ascending: false }).limit(100);
+      if (error?.code === '42P01') { setNoTable(true); setLoading(false); return; }
+      const adminIds = [...new Set((data ?? []).map(r => r.admin_id).filter(Boolean))];
+      let nameMap = {};
+      if (adminIds.length) {
+        const { data: profiles } = await supabase.from('profiles').select('id, display_name').in('id', adminIds);
+        nameMap = Object.fromEntries((profiles ?? []).map(p => [p.id, p.display_name]));
+      }
+      setRows((data ?? []).map(r => ({ ...r, adminName: nameMap[r.admin_id] ?? r.admin_id ?? '(system)' })));
+      setLoading(false);
+    }
+    load();
+  }, []);
+
+  if (loading) return <div style={{ textAlign: 'center', color: '#4a4d60', padding: 40 }}>Loading...</div>;
+
+  if (noTable) return (
+    <div>
+      <div style={S.err}>Run this SQL in Supabase to enable audit logging:</div>
+      <pre style={{ background: '#0a0b0f', border: '1px solid #2a2d40', borderRadius: 6, padding: 16, fontSize: 12, color: '#a0a3b0', overflowX: 'auto' }}>{`CREATE TABLE audit_log (
+  id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+  admin_id uuid REFERENCES auth.users(id) ON DELETE SET NULL,
+  action text NOT NULL,
+  target_id text,
+  details jsonb,
+  created_at timestamptz DEFAULT now()
+);
+ALTER TABLE audit_log ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "admin read" ON audit_log FOR SELECT
+  USING (EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'admin'));
+CREATE POLICY "admin insert" ON audit_log FOR INSERT
+  WITH CHECK (EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'admin'));
+ALTER TABLE profiles ADD COLUMN IF NOT EXISTS suspended boolean DEFAULT false;`}</pre>
+    </div>
+  );
+
+  return rows.length === 0 ? (
+    <div style={{ textAlign: 'center', color: '#4a4d60', padding: 32 }}>No audit log entries yet.</div>
+  ) : (
+    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+      <thead>
+        <tr style={{ borderBottom: '1px solid #2a2d40' }}>
+          {['Time', 'Admin', 'Action', 'Target'].map(h => <th key={h} style={S.th}>{h}</th>)}
+        </tr>
+      </thead>
+      <tbody>
+        {rows.map((r, i) => (
+          <tr key={r.id} style={{ borderBottom: '1px solid #1e2030', background: i % 2 === 1 ? '#0f1018' : 'transparent' }}>
+            <td style={{ ...S.td, color: '#4a4d60', whiteSpace: 'nowrap' }}>{new Date(r.created_at).toLocaleString()}</td>
+            <td style={{ ...S.td, fontWeight: 600 }}>{r.adminName}</td>
+            <td style={{ ...S.td, color: '#C9A227' }}>{r.action}</td>
+            <td style={{ ...S.td, color: '#6b7084', fontFamily: 'monospace', fontSize: 11 }}>{r.target_id ? r.target_id.slice(0, 8) + '...' : 'none'}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  );
+}
+
 // ── MAIN ─────────────────────────────────────────────────────
-const TABS = ['users', 'assignments', 'coaches', 'schools', 'leaderboard', 'activity', 'analytics'];
+const TABS = ['users', 'assignments', 'coaches', 'schools', 'leaderboard', 'activity', 'analytics', 'announcements', 'flags', 'audit'];
 
 export default function AdminDashboard({ user, onBack }) {
   const [tab, setTab] = useState('users');
@@ -984,6 +1245,9 @@ export default function AdminDashboard({ user, onBack }) {
           {tab === 'leaderboard' && <LeaderboardTab />}
           {tab === 'activity' && <ActivityTab />}
           {tab === 'analytics' && <AnalyticsTab />}
+          {tab === 'announcements' && <AnnouncementsTab currentUserId={user.id} />}
+          {tab === 'flags' && <FlagsTab />}
+          {tab === 'audit' && <AuditTab />}
         </div>
       </div>
     </div>
